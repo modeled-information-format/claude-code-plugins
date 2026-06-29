@@ -1,0 +1,19 @@
+{
+  "@context": "https://openvex.dev/ns/v0.2.0",
+  "@id": "https://modeled-information-format.github.io/vex/claude-code-plugins/v1",
+  "author": "modeled-information-format",
+  "role": "Project Maintainer",
+  "timestamp": "2026-06-22T00:00:00Z",
+  "version": 1,
+  "statements": [
+    {
+      "vulnerability": { "name": "CVE-0000-00000" },
+      "products": [
+        { "@id": "pkg:generic/claude-code-plugins" }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "Sample disposition — replace with real entries. The marketplace's scanners (Semgrep, Gitleaks, ShellCheck, Trivy, OSV) surface advisory findings on vendored plugins and the reference plugin; disposition them here as you triage, so the deploy gate enforces 'no UNDISPOSITIONED high/critical findings' rather than 'zero findings'."
+    }
+  ]
+}

@@ -1,0 +1,135 @@
+---
+name: quality-gates
+
+# Merge-time quality gates for the plugin marketplace — thin callers of the
+# central modeled-information-format/.github reusables (pinned by full commit SHA). Every
+# gate normalizes on SARIF and surfaces in the Security tab; wire "Code scanning
+# results" as a required check to make it the merge gate.
+#
+# The plugin-constituent scan map (research Pillar 2): ShellCheck over hook
+# scripts, Semgrep over MCP/bundled source, secret scanning (Gitleaks +
+# TruffleHog) over everything, manifest review over the catalog/manifests, plus
+# the org-standard SAST(actions)/SCA(OSV)/Trivy/Scorecard. A marketplace-validate
+# job runs the canonical `claude plugin validate`.
+#
+# The five plugin-gate reusables are merged into modeled-information-format/.github
+# (#12, cosign-signer fix #13) and pinned to that merged main SHA.
+
+"on":
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "23 7 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # --- org-standard gates (existing reusables @698148e) -----------------------
+  sast:
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+      packages: read
+    uses: >-
+      modeled-information-format/.github/.github/workflows/reusable-sast-codeql.yml@f211de97395ced798da52e28d89d79c22b3020ee
+    with:
+      languages: actions
+      build-mode: none
+
+  sca:
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+      pull-requests: write
+    uses: >-
+      modeled-information-format/.github/.github/workflows/reusable-sca-osv.yml@f211de97395ced798da52e28d89d79c22b3020ee
+    with:
+      fail-on-severity: high
+
+  trivy:
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+      packages: read
+    uses: >-
+      modeled-information-format/.github/.github/workflows/reusable-trivy.yml@f211de97395ced798da52e28d89d79c22b3020ee
+    with:
+      scan-iac: true
+
+  posture:
+    if: github.event_name == 'push' || github.event_name == 'schedule'
+    permissions:
+      security-events: write
+      id-token: write
+      contents: read
+      actions: read
+    uses: >-
+      modeled-information-format/.github/.github/workflows/reusable-scorecard.yml@f211de97395ced798da52e28d89d79c22b3020ee
+    with:
+      publish-results: false
+
+  # --- plugin-constituent gates (NEW reusables, merged #12/#13) ---------------
+  shellcheck:
+    permissions:
+      contents: read
+      security-events: write
+    uses: >-
+      modeled-information-format/.github/.github/workflows/reusable-shellcheck.yml@f211de97395ced798da52e28d89d79c22b3020ee
+  semgrep:
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    uses: >-
+      modeled-information-format/.github/.github/workflows/reusable-semgrep.yml@f211de97395ced798da52e28d89d79c22b3020ee
+    with:
+      directory: .
+
+  secrets:
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    uses: >-
+      modeled-information-format/.github/.github/workflows/reusable-secrets.yml@f211de97395ced798da52e28d89d79c22b3020ee
+    with:
+      directory: .
+
+  manifest-review:
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    uses: >-
+      modeled-information-format/.github/.github/workflows/reusable-manifest-review.yml@f211de97395ced798da52e28d89d79c22b3020ee
+    with:
+      directory: .
+
+  # --- canonical marketplace validation (claude CLI; don't reinvent) ----------
+  marketplace-validate:
+    name: marketplace-validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install Claude Code CLI (pinned)
+        env:
+          CLAUDE_VERSION: 2.1.185
+        run: npm install -g "@anthropic-ai/claude-code@${CLAUDE_VERSION}"
+
+      - name: Validate marketplace + plugin manifests
+        run: claude plugin validate .

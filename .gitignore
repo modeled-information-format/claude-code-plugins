@@ -1,0 +1,11 @@
+# Build + signing outputs (produced in CI, never committed)
+dist/
+*.cosign.bundle
+*.sarif
+
+# Plugin/MCP dependency trees
+node_modules/
+.venv/
+
+# OS / editor cruft
+.DS_Store

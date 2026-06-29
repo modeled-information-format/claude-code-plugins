@@ -1,0 +1,8 @@
+# Trivy configuration — auto-loaded from the repo root by the Trivy CLI. Governs
+# the filesystem scan run by the `trivy` job in quality-gates.yml (misconfig +
+# license). Plugin source trees that vendor dependencies (e.g. an MCP server's
+# node_modules) are dependency noise covered by the SCA/OSV gate, so skip them.
+scan:
+  skip-dirs:
+    - "**/node_modules"
+    - "**/.venv"

@@ -1,0 +1,36 @@
+---
+name: CI
+
+# Continuous integration: pin-check + workflow lint, thin callers of the central
+# modeled-information-format/.github reusables (pinned by the .github repo's commit SHA).
+
+"on":
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Every `uses:` MUST be a full 40-char commit SHA; thin caller of the central
+  # pin-check reusable (never reinvented).
+  # modeled-information-format/.github main @ aba1860 (resolved 2026-06-16)
+  pin-check:
+    permissions:
+      contents: read
+    uses: >-
+      modeled-information-format/.github/.github/workflows/pin-check.yml@f211de97395ced798da52e28d89d79c22b3020ee
+  # Centralized, verified actionlint fetch.
+  # modeled-information-format/.github @ b314c29 (#6 — in-step PATH fix)
+  validate-workflows:
+    permissions:
+      contents: read
+    uses: >-
+      modeled-information-format/.github/.github/workflows/reusable-actionlint.yml@f211de97395ced798da52e28d89d79c22b3020ee

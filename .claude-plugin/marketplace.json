@@ -1,0 +1,36 @@
+{
+  "name": "modeled-information-format",
+  "description": "The 'modeled-information-format' Claude Code plugin marketplace. Every plugin is SHA-pinned, scanned across the org's quality gates, and admitted to this catalog only when its attestations verify fail-closed.",
+  "owner": {
+    "name": "modeled-information-format"
+  },
+  "metadata": {
+    "pluginRoot": "plugins"
+  },
+  "plugins": [
+    {
+      "name": "modeled-information-format",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/modeled-information-format/.github.git",
+        "path": ".github",
+        "ref": "v0.1.2",
+        "sha": "508aa7a385d3f6776feb175e40b3a0e9f08402c4"
+      },
+      "description": "Signed, SLSA-attested, fail-closed-verified releases — central reusable signing/seam/verify workflows and independent gh attestation verify.",
+      "author": {
+        "name": "modeled-information-format"
+      },
+      "license": "Apache-2.0",
+      "keywords": [
+        "slsa",
+        "attestation",
+        "supply-chain",
+        "sigstore",
+        "sbom",
+        "ci-cd",
+        "release-signing"
+      ]
+    }
+  ]
+}
