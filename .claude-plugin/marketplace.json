@@ -9,13 +9,34 @@
   },
   "plugins": [
     {
+      "name": "colophon",
+      "source": {
+        "source": "github",
+        "repo": "modeled-information-format/colophon",
+        "ref": "v0.1.0",
+        "sha": "cc31d7ac176ee3a957be4b3dfdce3482a65ffaaf"
+      },
+      "description": "Reference plugin that exercises the attest/scan/verify pipeline end to end.",
+      "author": {
+        "name": "modeled-information-format"
+      },
+      "category": "example",
+      "license": "Apache-2.0",
+      "keywords": [
+        "reference",
+        "attested",
+        "example",
+        "colophon"
+      ]
+    },
+    {
       "name": "modeled-information-format",
       "source": {
         "source": "git-subdir",
         "url": "https://github.com/modeled-information-format/.github.git",
         "path": ".github",
-        "ref": "v0.1.2",
-        "sha": "508aa7a385d3f6776feb175e40b3a0e9f08402c4"
+        "ref": "v0.1.0",
+        "sha": "e33fce2624239275f5798968ff3d8c1b491c6952"
       },
       "description": "Signed, SLSA-attested, fail-closed-verified releases — central reusable signing/seam/verify workflows and independent gh attestation verify.",
       "author": {
