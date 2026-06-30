@@ -1,3 +1,8 @@
+<p align="center">
+  <img src=".github/social-preview.png" width="860"
+       alt="claude-code-plugins — an attested Claude Code plugin marketplace. A machine-cyan plugin and its constituents (commands, agents, skills, hooks, MCP) pass through a stack of quality gates to a green attestation seal — SLSA provenance, a CycloneDX SBOM, and cosign — converge on a single light node, and are admitted into the human-amber marketplace.json catalog; an unverified artifact is refused at a red fail-closed branch. Three pillars: signed and attested, admission is the gate, verify it yourself.">
+</p>
+
 # claude-code-plugins
 
 An **attested Claude Code plugin marketplace**. Every plugin in this catalog —

@@ -1,0 +1,148 @@
+<svg width="1280" height="640" viewBox="0 0 1280 640" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="claude-code-plugins — an attested Claude Code plugin marketplace; a plugin is scanned, signed, and attested, then admitted to the catalog only when its attestations verify fail-closed">
+  <title>Attested Plugin Marketplace — built on MIF</title>
+  <desc>Dark field. The chevron-M MIF mark and wordmark. Title "Plugin Marketplace". Three pillars — signed and attested, admission is the gate, verify it yourself — beside a supply-chain motif: a machine-cyan plugin and its constituents pass through a stack of quality gates to a green attestation seal, converge on a single light node, and are admitted into the human-amber marketplace.json catalog; an unverified artifact is refused at a red fail-closed branch.</desc>
+  <defs>
+    <linearGradient id="field" x1="0" y1="0" x2="1280" y2="640" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0A0D13"/>
+      <stop offset="1" stop-color="#0E121B"/>
+    </linearGradient>
+    <radialGradient id="sealGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#34C77B" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#34C77B" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Field -->
+  <rect width="1280" height="640" fill="url(#field)"/>
+  <!-- Faint inset frame -->
+  <rect x="36" y="36" width="1208" height="568" rx="20" fill="none" stroke="#222C3C" stroke-width="2"/>
+
+  <!-- ===== Identity lockup (top-left): chevron-M mark + wordmark ===== -->
+  <g transform="translate(84 66) scale(1.15)" fill="none" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M6 42 L6 6 L24 29" stroke="#34D3E8"/>
+    <path d="M24 29 L42 6 L42 42" stroke="#F5B642"/>
+    <path d="M24 25.6 L27.4 29 L24 32.4 L20.6 29 Z" fill="#E8EEF6" stroke="none"/>
+  </g>
+  <text x="150" y="112" font-family="Menlo, 'SF Mono', 'JetBrains Mono', monospace"
+        font-size="30" font-weight="700" letter-spacing="0.04em" fill="#E8EEF6">MIF</text>
+  <text x="222" y="112" font-family="Menlo, 'SF Mono', 'JetBrains Mono', monospace"
+        font-size="15" fill="#7C8AA0" letter-spacing="0.05em">Modeled Information Format</text>
+
+  <!-- ===== Title block (left column) ===== -->
+  <text x="84" y="214" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="60" font-weight="700" letter-spacing="-0.02em" fill="#E8EEF6">Plugin Marketplace</text>
+  <text x="86" y="254" font-family="Menlo, 'SF Mono', 'JetBrains Mono', monospace"
+        font-size="18" fill="#AEBCCF" letter-spacing="0.01em">Attested Claude Code plugins, signed &amp; verified.</text>
+
+  <!-- ===== Three pillars ===== -->
+  <!-- 1 · Signed & attested (machine-cyan square = the structure a parser verifies) -->
+  <rect x="86" y="316" width="16" height="16" rx="2" fill="#34D3E8"/>
+  <text x="122" y="324" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="24" font-weight="600" fill="#E8EEF6">Signed &amp; attested</text>
+  <text x="122" y="350" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="16" fill="#7C8AA0">SLSA provenance, a CycloneDX SBOM, and signed gate verdicts.</text>
+
+  <!-- 2 · Admission is the gate (light vertex node = the single admitted artifact) -->
+  <path d="M94 398 L100.4 404.4 L94 410.8 L87.6 404.4 Z" fill="#E8EEF6"/>
+  <text x="122" y="406" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="24" font-weight="600" fill="#E8EEF6">Admission is the gate</text>
+  <text x="122" y="432" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="16" fill="#7C8AA0">A SHA is admitted only when its attestations verify — fail-closed.</text>
+
+  <!-- 3 · Verify it yourself (human-amber dot = the catalog a person installs from) -->
+  <circle cx="94" cy="488" r="9" fill="#F5B642"/>
+  <text x="122" y="496" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="24" font-weight="600" fill="#E8EEF6">Verify it yourself</text>
+  <text x="122" y="522" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="16" fill="#7C8AA0">Each release ships copy-paste gh attestation verify + cosign.</text>
+
+  <!-- ===== Supply-chain motif (right column): plugin → gates → seal → catalog, fail-closed ===== -->
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <!-- soft glow at the attestation seal (the verifying point) -->
+    <circle cx="985" cy="346" r="74" fill="url(#sealGlow)"/>
+
+    <!-- conveyor edges (the admitted path) -->
+    <g stroke="#34D3E8" stroke-width="2.5" opacity="0.55" fill="none">
+      <path d="M748 346 L804 346"/>
+      <path d="M912 346 L958 346"/>
+    </g>
+    <g stroke="#F5B642" stroke-width="2.5" opacity="0.6" fill="none">
+      <path d="M1010 346 L1052 346"/>
+    </g>
+    <!-- arrowheads -->
+    <path d="M804 346 l-7 -4 v8 z" fill="#34D3E8" opacity="0.7"/>
+    <path d="M958 346 l-7 -4 v8 z" fill="#34D3E8" opacity="0.7"/>
+    <path d="M1052 346 l-7 -4 v8 z" fill="#F5B642" opacity="0.75"/>
+
+    <!-- the fail-closed reject branch (an unverified artifact is refused) -->
+    <path d="M985 372 L985 420" stroke="#FF5C6C" stroke-width="2" stroke-dasharray="3 4" opacity="0.6" fill="none"/>
+
+    <!-- ===== Zone A · the plugin and its constituents (machine-cyan = the structure) ===== -->
+    <!-- constituent ticks feeding the plugin (commands · agents · skills · hooks · mcp) -->
+    <g fill="#34D3E8">
+      <rect x="688" y="326" width="7" height="7" rx="1.5" opacity="0.9"/>
+      <rect x="688" y="338" width="7" height="7" rx="1.5" opacity="0.72"/>
+      <rect x="688" y="350" width="7" height="7" rx="1.5" opacity="0.9"/>
+      <rect x="688" y="362" width="7" height="7" rx="1.5" opacity="0.72"/>
+    </g>
+    <g stroke="#2E3A4D" stroke-width="1.5">
+      <line x1="695" y1="329.5" x2="712" y2="340"/>
+      <line x1="695" y1="341.5" x2="712" y2="344"/>
+      <line x1="695" y1="353.5" x2="712" y2="348"/>
+      <line x1="695" y1="365.5" x2="712" y2="352"/>
+    </g>
+    <!-- plugin node -->
+    <rect x="712" y="330" width="32" height="32" rx="5" fill="#0A2630" stroke="#34D3E8" stroke-width="2.5"/>
+
+    <!-- ===== Zone B · the quality gates (cyan = the scans a parser runs) ===== -->
+    <g fill="#34D3E8">
+      <rect x="812" y="319" width="94" height="7" rx="3.5" opacity="0.85"/>
+      <rect x="812" y="332" width="94" height="7" rx="3.5" opacity="0.7"/>
+      <rect x="812" y="345" width="94" height="7" rx="3.5" opacity="0.85"/>
+      <rect x="812" y="358" width="94" height="7" rx="3.5" opacity="0.7"/>
+      <rect x="812" y="371" width="94" height="7" rx="3.5" opacity="0.85"/>
+    </g>
+
+    <!-- ===== Zone C · the attestation seal (green = verifies) + the convergence node ===== -->
+    <circle cx="985" cy="346" r="23" fill="#0A0D13" stroke="#34C77B" stroke-width="3"/>
+    <path d="M974 347 L981 355 L997 334" stroke="#34C77B" stroke-width="3.5" fill="none"/>
+    <!-- single light vertex node: the one admitted artifact both readers converge on -->
+    <path d="M1031 346 L1037.5 352.5 L1031 359 L1024.5 352.5 Z" fill="#E8EEF6"/>
+
+    <!-- ===== Zone D · the catalog (human-amber = the plugins a person installs) ===== -->
+    <rect x="1048" y="302" width="150" height="90" rx="10" fill="#151B27" stroke="#2E3A4D" stroke-width="1.5"/>
+    <circle cx="1066" cy="346" r="6" fill="#F5B642"/>
+    <circle cx="1066" cy="370" r="5.5" fill="#F5B642" opacity="0.72"/>
+    <!-- a small fail-closed lock at the catalog entrance -->
+    <g stroke="#7C8AA0" stroke-width="1.6" fill="none">
+      <rect x="1054.5" y="318.5" width="11" height="8" rx="1.5" fill="#151B27"/>
+      <path d="M1056.5 318.5 v-2.5 a3.5 3.5 0 0 1 7 0 v2.5"/>
+    </g>
+  </g>
+
+  <!-- ===== typed micro-labels: be the example — real names, mono, sparse ===== -->
+  <g font-family="Menlo, 'SF Mono', 'JetBrains Mono', monospace" letter-spacing="0.02em">
+    <g font-size="12.5">
+      <text x="728" y="316" text-anchor="middle" fill="#AEBCCF">plugin</text>
+      <text x="859" y="310" text-anchor="middle" fill="#34D3E8">gates</text>
+      <text x="985" y="308" text-anchor="middle" fill="#E8EEF6">signed</text>
+      <text x="1070" y="318" text-anchor="start" fill="#F5B642">catalog</text>
+    </g>
+    <g font-size="11">
+      <text x="728" y="384" text-anchor="middle" fill="#7C8AA0">+ constituents</text>
+      <text x="859" y="396" text-anchor="middle" fill="#7C8AA0">sast · sca · …</text>
+      <text x="985" y="392" text-anchor="middle" fill="#7C8AA0">slsa · sbom · cosign</text>
+    </g>
+    <g font-size="10.5">
+      <text x="1080" y="350" text-anchor="start" fill="#7C8AA0">attested-reference</text>
+      <text x="1080" y="374" text-anchor="start" fill="#7C8AA0">git-subdir · sha</text>
+      <text x="985" y="434" text-anchor="middle" fill="#FF5C6C" opacity="0.85">unverified · blocked</text>
+    </g>
+  </g>
+
+  <!-- ===== Footer locators ===== -->
+  <text x="84" y="572" font-family="Menlo, 'SF Mono', 'JetBrains Mono', monospace"
+        font-size="15" fill="#7C8AA0" letter-spacing="0.01em">modeled-information-format/claude-code-plugins</text>
+  <text x="1192" y="572" text-anchor="end" font-family="Menlo, 'SF Mono', 'JetBrains Mono', monospace"
+        font-size="15" fill="#7C8AA0" letter-spacing="0.02em">mif-spec.dev</text>
+</svg>
