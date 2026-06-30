@@ -126,7 +126,7 @@ jobs:
       # with the central catalog-updater hub so "what must verify for an external
       # entry" lives in one place.
       - name: Verify external entries' attestations (shared, fail-closed)
-        uses: modeled-information-format/.github/.github/actions/plugin-catalog-update@36cdbd7d75865b88e8beec4813c1d3587fa98644 # engine url-source fix (post v0.1.0)
+        uses: modeled-information-format/.github/.github/actions/plugin-catalog-update@789b6baf9a1451f406ff507aabb5c5be8a9d48a4 # .github main (36cdbd7d no longer exists; this carries the #14 shell-injection fix)
         with:
           mode: verify
           repo: ${{ github.repository }}
