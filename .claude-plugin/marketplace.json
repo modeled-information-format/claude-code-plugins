@@ -30,6 +30,31 @@
       ]
     },
     {
+      "name": "mif-docs",
+      "source": {
+        "source": "github",
+        "repo": "modeled-information-format/mif-docs-plugin",
+        "ref": "v0.1.0",
+        "sha": "35acb61d5edbc0186a2e53a4051783343938d5bb"
+      },
+      "description": "MIF-first documentation skill suite: one skill per document genre (Diataxis, ADR, RFC/PEP, runbook, PRD, Kiro, arc42/C4, changelog) over a MIF L1->L3 floor.",
+      "author": {
+        "name": "modeled-information-format"
+      },
+      "category": "documentation",
+      "license": "Apache-2.0",
+      "keywords": [
+        "documentation",
+        "mif",
+        "adr",
+        "diataxis",
+        "rfc",
+        "runbook",
+        "prd",
+        "spec"
+      ]
+    },
+    {
       "name": "modeled-information-format",
       "source": {
         "source": "git-subdir",
