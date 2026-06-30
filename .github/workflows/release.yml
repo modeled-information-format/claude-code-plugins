@@ -137,46 +137,46 @@ jobs:
     needs: [meta]
     permissions: { security-events: write, contents: read, actions: read, packages: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-sast-codeql.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-sast-codeql.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
     with: { languages: actions, build-mode: none }
   gate-sca:
     needs: [meta]
     permissions: { actions: read, contents: read, security-events: write, pull-requests: write }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-sca-osv.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-sca-osv.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
     with: { fail-on-severity: high }
   gate-trivy:
     needs: [meta]
     permissions: { contents: read, security-events: write, actions: read, packages: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-trivy.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-trivy.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
     with: { scan-iac: true }
   gate-shellcheck:
     needs: [meta]
     permissions: { contents: read, security-events: write }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-shellcheck.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-shellcheck.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
   gate-semgrep:
     needs: [meta]
     permissions: { contents: read, security-events: write, actions: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-semgrep.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-semgrep.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
   gate-secrets:
     needs: [meta]
     permissions: { contents: read, security-events: write, actions: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-secrets.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-secrets.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
   gate-manifest:
     needs: [meta]
     permissions: { contents: read, security-events: write, actions: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-manifest-review.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-manifest-review.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
   # --- seam attestations: bind each verdict to the tarball digest -------------
   attest-sast:
     needs: [meta, build, gate-sast]
     permissions: { id-token: write, attestations: write, contents: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
     with:
       subject-name: ${{ needs.build.outputs.subject-name }}
       subject-digest: ${{ needs.build.outputs.subject-digest }}
@@ -187,7 +187,7 @@ jobs:
     needs: [meta, build, gate-sca]
     permissions: { id-token: write, attestations: write, contents: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
     with:
       subject-name: ${{ needs.build.outputs.subject-name }}
       subject-digest: ${{ needs.build.outputs.subject-digest }}
@@ -198,7 +198,7 @@ jobs:
     needs: [meta, build, gate-trivy]
     permissions: { id-token: write, attestations: write, contents: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
     with:
       subject-name: ${{ needs.build.outputs.subject-name }}
       subject-digest: ${{ needs.build.outputs.subject-digest }}
@@ -209,7 +209,7 @@ jobs:
     needs: [meta, build, gate-shellcheck]
     permissions: { id-token: write, attestations: write, contents: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
     with:
       subject-name: ${{ needs.build.outputs.subject-name }}
       subject-digest: ${{ needs.build.outputs.subject-digest }}
@@ -220,7 +220,7 @@ jobs:
     needs: [meta, build, gate-semgrep]
     permissions: { id-token: write, attestations: write, contents: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
     with:
       subject-name: ${{ needs.build.outputs.subject-name }}
       subject-digest: ${{ needs.build.outputs.subject-digest }}
@@ -231,7 +231,7 @@ jobs:
     needs: [meta, build, gate-secrets]
     permissions: { id-token: write, attestations: write, contents: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
     with:
       subject-name: ${{ needs.build.outputs.subject-name }}
       subject-digest: ${{ needs.build.outputs.subject-digest }}
@@ -242,7 +242,7 @@ jobs:
     needs: [meta, build, gate-manifest]
     permissions: { id-token: write, attestations: write, contents: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
     with:
       subject-name: ${{ needs.build.outputs.subject-name }}
       subject-digest: ${{ needs.build.outputs.subject-digest }}
@@ -255,7 +255,7 @@ jobs:
     needs: [meta]
     permissions: { id-token: write, contents: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-cosign-sign.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-cosign-sign.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
     with:
       blob-path: .claude-plugin/marketplace.json
 
@@ -264,7 +264,7 @@ jobs:
     needs: [meta, build]
     permissions: { id-token: write, attestations: write, contents: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-vex.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-vex.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
     with:
       subject-name: ${{ needs.build.outputs.subject-name }}
       subject-digest: ${{ needs.build.outputs.subject-digest }}

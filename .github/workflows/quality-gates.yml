@@ -40,7 +40,7 @@ jobs:
       actions: read
       packages: read
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-sast-codeql.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-sast-codeql.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
     with:
       languages: actions
       build-mode: none
@@ -52,7 +52,7 @@ jobs:
       security-events: write
       pull-requests: write
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-sca-osv.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-sca-osv.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
     with:
       fail-on-severity: high
 
@@ -63,7 +63,7 @@ jobs:
       actions: read
       packages: read
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-trivy.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-trivy.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
     with:
       scan-iac: true
 
@@ -75,7 +75,7 @@ jobs:
       contents: read
       actions: read
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-scorecard.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-scorecard.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
     with:
       publish-results: false
 
@@ -85,14 +85,14 @@ jobs:
       contents: read
       security-events: write
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-shellcheck.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-shellcheck.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
   semgrep:
     permissions:
       contents: read
       security-events: write
       actions: read
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-semgrep.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-semgrep.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
     with:
       directory: .
 
@@ -102,7 +102,7 @@ jobs:
       security-events: write
       actions: read
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-secrets.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-secrets.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
     with:
       directory: .
 
@@ -112,7 +112,7 @@ jobs:
       security-events: write
       actions: read
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-manifest-review.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-manifest-review.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
     with:
       directory: .
 

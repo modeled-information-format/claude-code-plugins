@@ -26,11 +26,11 @@ jobs:
     permissions:
       contents: read
     uses: >-
-      modeled-information-format/.github/.github/workflows/pin-check.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/pin-check.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
   # Centralized, verified actionlint fetch.
   # modeled-information-format/.github @ b314c29 (#6 — in-step PATH fix)
   validate-workflows:
     permissions:
       contents: read
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-actionlint.yml@f211de97395ced798da52e28d89d79c22b3020ee
+      modeled-information-format/.github/.github/workflows/reusable-actionlint.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
