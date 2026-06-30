@@ -1,4 +1,5 @@
 ---
+title: Why an attested marketplace
 diataxis_type: explanation
 ---
 # Why an attested marketplace

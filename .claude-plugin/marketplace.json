@@ -9,15 +9,40 @@
   },
   "plugins": [
     {
+      "name": "mif-docs",
+      "source": {
+        "source": "github",
+        "repo": "modeled-information-format/mif-docs-plugin",
+        "ref": "v0.1.0",
+        "sha": "35acb61d5edbc0186a2e53a4051783343938d5bb"
+      },
+      "description": "MIF-first documentation skill suite: one skill per document genre (Diataxis, ADR, RFC/PEP, runbook, PRD, Kiro, arc42/C4, changelog) over a MIF L1->L3 floor.",
+      "author": {
+        "name": "modeled-information-format"
+      },
+      "category": "documentation",
+      "license": "MIT",
+      "keywords": [
+        "documentation",
+        "mif",
+        "adr",
+        "diataxis",
+        "rfc",
+        "runbook",
+        "prd",
+        "spec"
+      ]
+    },
+    {
       "name": "modeled-information-format",
       "source": {
         "source": "git-subdir",
         "url": "https://github.com/modeled-information-format/.github.git",
         "path": ".github",
-        "ref": "v0.1.2",
-        "sha": "508aa7a385d3f6776feb175e40b3a0e9f08402c4"
+        "ref": "v0.1.0",
+        "sha": "e33fce2624239275f5798968ff3d8c1b491c6952"
       },
-      "description": "Signed, SLSA-attested, fail-closed-verified releases — central reusable signing/seam/verify workflows and independent gh attestation verify.",
+      "description": "Signed, SLSA-attested, fail-closed-verified releases \u2014 central reusable signing/seam/verify workflows and independent gh attestation verify.",
       "author": {
         "name": "modeled-information-format"
       },

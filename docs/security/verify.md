@@ -1,4 +1,5 @@
 ---
+title: Verify a release
 diataxis_type: how-to
 ---
 # Verify a release
