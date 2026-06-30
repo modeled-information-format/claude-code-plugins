@@ -13,7 +13,10 @@
     "astro-mermaid": "2.1.0"
   },
   "overrides": {
-    "esbuild": "0.28.1"
+    "esbuild": "0.28.1",
+    "starlight-llms-txt": {
+      "astro": "$astro"
+    }
   },
   "allowScripts": {
     "esbuild@0.28.1": true,
