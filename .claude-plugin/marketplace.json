@@ -21,7 +21,7 @@
         "name": "modeled-information-format"
       },
       "category": "documentation",
-      "license": "Apache-2.0",
+      "license": "MIT",
       "keywords": [
         "documentation",
         "mif",
@@ -42,7 +42,7 @@
         "ref": "v0.1.0",
         "sha": "e33fce2624239275f5798968ff3d8c1b491c6952"
       },
-      "description": "Signed, SLSA-attested, fail-closed-verified releases — central reusable signing/seam/verify workflows and independent gh attestation verify.",
+      "description": "Signed, SLSA-attested, fail-closed-verified releases \u2014 central reusable signing/seam/verify workflows and independent gh attestation verify.",
       "author": {
         "name": "modeled-information-format"
       },
