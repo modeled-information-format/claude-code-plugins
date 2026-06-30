@@ -63,7 +63,7 @@ jobs:
       actions: read
       packages: read
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-trivy.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
+      modeled-information-format/.github/.github/workflows/reusable-trivy.yml@bf1c8e219de5b134c82d51c1b66507cd86e2d711
     with:
       scan-iac: true
 
