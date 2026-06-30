@@ -9,27 +9,6 @@
   },
   "plugins": [
     {
-      "name": "colophon",
-      "source": {
-        "source": "github",
-        "repo": "modeled-information-format/colophon",
-        "ref": "v0.1.0",
-        "sha": "cc31d7ac176ee3a957be4b3dfdce3482a65ffaaf"
-      },
-      "description": "Reference plugin that exercises the attest/scan/verify pipeline end to end.",
-      "author": {
-        "name": "modeled-information-format"
-      },
-      "category": "example",
-      "license": "Apache-2.0",
-      "keywords": [
-        "reference",
-        "attested",
-        "example",
-        "colophon"
-      ]
-    },
-    {
       "name": "mif-docs",
       "source": {
         "source": "github",
