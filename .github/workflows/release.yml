@@ -155,7 +155,7 @@ jobs:
     needs: [meta]
     permissions: { contents: read, security-events: write }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-shellcheck.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
+      modeled-information-format/.github/.github/workflows/reusable-shellcheck.yml@02f479d564026f83ee42952a0afad0e123e38bfa
   gate-semgrep:
     needs: [meta]
     permissions: { contents: read, security-events: write, actions: read }
