@@ -6,7 +6,7 @@ name: Dependabot auto-merge
 # settings (allow_auto_merge + branch protection) are applied out-of-band by
 # docs/onboarding/org/dependabot-automerge-settings.sh in the .github repo.
 
-on:
+"on":
   pull_request_target:
     types: [opened, synchronize, reopened]
 
