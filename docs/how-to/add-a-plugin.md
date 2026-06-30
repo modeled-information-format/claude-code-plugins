@@ -1,4 +1,5 @@
 ---
+title: Add a plugin to the catalog
 diataxis_type: how-to
 ---
 # Add a plugin to the catalog

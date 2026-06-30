@@ -1,4 +1,5 @@
 ---
+title: Documentation Index
 diataxis_type: reference
 ---
 # Documentation Index

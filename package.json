@@ -1,0 +1,25 @@
+{
+  "name": "claude-code-plugins-docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "astro": "6.4.8",
+    "@astrojs/starlight": "0.40.0",
+    "astro-mermaid": "2.1.0"
+  },
+  "overrides": {
+    "esbuild": "0.28.1"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "sharp@0.34.5": true
+  },
+  "devDependencies": {
+    "starlight-llms-txt": "0.10.0"
+  }
+}

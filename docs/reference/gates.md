@@ -1,4 +1,5 @@
 ---
+title: Gates reference
 diataxis_type: reference
 ---
 # Gates reference
