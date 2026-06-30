@@ -39,7 +39,7 @@ export default defineConfig({
             { label: "MIF home", link: "https://modeled-information-format.github.io/" },
             { label: "Ecosystem docs", link: "https://modeled-information-format.github.io/docs/" },
             { label: "Ontology corpus", link: "https://modeled-information-format.github.io/ontologies/" },
-            { label: "mif-docs plugin", link: "https://github.com/modeled-information-format/mif-docs-plugin" },
+            { label: "mif-docs plugin", link: "https://modeled-information-format.github.io/mif-docs-plugin/" },
             { label: "Specification (mif-spec.dev)", link: "https://mif-spec.dev" },
           ],
         },
