@@ -75,9 +75,13 @@ jobs:
       contents: read
       actions: read
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-scorecard.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
+      modeled-information-format/.github/.github/workflows/reusable-scorecard.yml@f29366f7dbe223fcf14e8994483fec667faa3164
     with:
       publish-results: false
+    secrets:
+      # CI app key so Scorecard scores Branch-Protection from real settings; its
+      # client-id is vars.CI_CLIENT_APP_ID (read inside the reusable).
+      app-private-key: ${{ secrets.CI_CLIENT_APP_PRIVATE_KEY }}
 
   # --- plugin-constituent gates (NEW reusables, merged #12/#13) ---------------
   shellcheck:
