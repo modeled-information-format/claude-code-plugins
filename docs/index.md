@@ -61,7 +61,7 @@ hero:
 
         <rect x="85" y="362" width="391" height="30" rx="15" fill="#151B27" stroke="#2E3A4D"/>
         <circle cx="105" cy="377" r="4.5" fill="#F5B642"/>
-        <text x="121" y="381" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="12.5" letter-spacing="0.02em"><tspan fill="#F5B642">Claude Code plugins</tspan><tspan fill="#AEBCCF">  ·  verified before listing</tspan></text>
+        <text x="121" y="381" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="12.5" letter-spacing="0.02em" xml:space="preserve"><tspan fill="#F5B642">Claude Code plugins</tspan><tspan fill="#AEBCCF">  ·  verified before listing</tspan></text>
       </svg>
   actions:
     - text: Add a plugin
