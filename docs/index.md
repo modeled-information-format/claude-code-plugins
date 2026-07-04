@@ -67,8 +67,15 @@ hero:
     - text: Add a plugin
       link: how-to/add-a-plugin/
       icon: right-arrow
+    - text: Registered plugins
+      link: reference/registered-plugins/
+      variant: minimal
     - text: Verify a release
       link: security/verify/
+      variant: minimal
+    - text: MIF home
+      link: https://modeled-information-format.github.io/
+      icon: external
       variant: minimal
 ---
 
