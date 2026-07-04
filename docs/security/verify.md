@@ -109,5 +109,5 @@ The marketplace's fail-closed guarantee therefore lives at **catalog admission**
 (a plugin SHA enters the catalog only if its attestations verify in CI), backed
 by a SHA-pinned and cosign-signed catalog. Running the steps above is how you
 extend that guarantee to your own machine until native install-blocking lands.
-See [../explanation/attested-marketplace.md](https://modeled-information-format.github.io/claude-code-plugins/explanation/attested-marketplace/)
+See [how the marketplace attests plugins](https://modeled-information-format.github.io/claude-code-plugins/explanation/attested-marketplace/)
 for the reasoning.

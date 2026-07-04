@@ -91,7 +91,7 @@ branch protection so the pin requirement is enforced at merge, not by convention
 In-pipeline green is not the acceptance test. Re-verify the pinned plugin's
 attestations independently from a clean workstation before approving — the exact
 commands are in [SECURITY.md](https://github.com/modeled-information-format/claude-code-plugins/blob/main/SECURITY.md#verify-a-plugin-release) and
-[../security/verify.md](https://modeled-information-format.github.io/claude-code-plugins/security/verify/).
+[the verification guide](https://modeled-information-format.github.io/claude-code-plugins/security/verify/).
 
 Once admission passes and the attestations re-verify, merge. The merged
 `marketplace.json` is re-signed (cosign keyless) as part of the release so
