@@ -21,7 +21,7 @@ author plugin → its repo attests its tarball (provenance + SBOM + gate verdict
 ## Before you start
 
 - The plugin must follow the
-  [canonical layout](../../README.md#layout-canonical): a
+  [canonical layout](https://github.com/modeled-information-format/claude-code-plugins/blob/main/README.md#layout-canonical): a
   `.claude-plugin/plugin.json` with required `name`, `description`, and
   `author.name`, plus any of `commands/ agents/ skills/ hooks/ .mcp.json`.
 - The plugin's source repo must produce an **attested tarball** — SLSA build
@@ -90,8 +90,8 @@ branch protection so the pin requirement is enforced at merge, not by convention
 
 In-pipeline green is not the acceptance test. Re-verify the pinned plugin's
 attestations independently from a clean workstation before approving — the exact
-commands are in [SECURITY.md](../../SECURITY.md#verify-a-plugin-release) and
-[../security/verify.md](../security/verify.md).
+commands are in [SECURITY.md](https://github.com/modeled-information-format/claude-code-plugins/blob/main/SECURITY.md#verify-a-plugin-release) and
+[../security/verify.md](https://modeled-information-format.github.io/claude-code-plugins/security/verify/).
 
 Once admission passes and the attestations re-verify, merge. The merged
 `marketplace.json` is re-signed (cosign keyless) as part of the release so
