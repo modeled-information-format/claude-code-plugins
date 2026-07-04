@@ -10,7 +10,7 @@ workstation. There are no long-lived signing keys — everything is Sigstore
 keyless (OIDC, Fulcio, Rekor), so anyone can re-check.
 
 This walkthrough mirrors the commands in
-[SECURITY.md](../../SECURITY.md#verify-a-plugin-release) with more narrative.
+[SECURITY.md](https://github.com/modeled-information-format/claude-code-plugins/blob/main/SECURITY.md#verify-a-plugin-release) with more narrative.
 Keep SECURITY.md as the terse reference; read this when you want to understand
 what each step asserts.
 
@@ -109,5 +109,5 @@ The marketplace's fail-closed guarantee therefore lives at **catalog admission**
 (a plugin SHA enters the catalog only if its attestations verify in CI), backed
 by a SHA-pinned and cosign-signed catalog. Running the steps above is how you
 extend that guarantee to your own machine until native install-blocking lands.
-See [../explanation/attested-marketplace.md](../explanation/attested-marketplace.md)
+See [how the marketplace attests plugins](https://modeled-information-format.github.io/claude-code-plugins/explanation/attested-marketplace/)
 for the reasoning.
