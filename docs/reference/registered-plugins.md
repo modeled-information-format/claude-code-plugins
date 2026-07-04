@@ -13,7 +13,7 @@ MIF-first documentation skill suite: one skill per document genre (Diataxis, ADR
 | Field | Value |
 | --- | --- |
 | Source | [modeled-information-format/mif-docs-plugin](https://github.com/modeled-information-format/mif-docs-plugin) |
-| Ref | `v0.1.2` |
+| Ref | `v0.3.1` |
 | Category | documentation |
 | License | MIT |
 | Keywords | documentation, mif, adr, diataxis, rfc, runbook, prd, spec |
