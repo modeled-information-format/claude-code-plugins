@@ -128,15 +128,20 @@ updater here only keeps the workflow `uses:` pins fresh.)
 
 A plugin's `plugin.json` can declare a dependency on another plugin by a
 semver range (e.g. `{"name": "mif-docs", "marketplace": "modeled-information-format",
-"version": "^0.3.1"}`) instead of an exact SHA. Claude Code resolves that range
-by running `git ls-remote --tags` against **your** plugin's repo and only
-considers tags shaped `{your-plugin-name}--v{version}` — not the bare
-`vX.Y.Z` tag most repos here cut for their own releases. If that tag is
-missing, installing the dependent plugin fails with "no git tag satisfying
-\<range\>", even though the exact release the catalog pins is correct.
+"version": "^0.3.1"}`) instead of an exact SHA — the `marketplace` field is
+only needed when the dependency lives in a *different* marketplace than the
+declaring plugin, and the declaring plugin's own marketplace must allow-list
+`modeled-information-format` (`allowCrossMarketplaceDependenciesOn`) or the
+install is blocked with a separate `cross-marketplace` error before it ever
+gets to tag resolution. Claude Code resolves that range by running
+`git ls-remote --tags` against **your** plugin's repo and only considers tags
+shaped `{your-plugin-name}--v{version}` — not the bare `vX.Y.Z` tag most repos
+here cut for their own releases. If that tag is missing, installing the
+dependent plugin fails with "no git tag satisfying \<range\>", even though the
+exact release the catalog pins is correct.
 
 If your plugin might ever be depended on this way, your release process must
 also create that tag — `claude plugin tag --push` does this for you (it
 validates `plugin.json` and any enclosing marketplace entry agree first). See
 [the org's plugin dependency-tag reference](https://github.com/modeled-information-format/.github/blob/main/docs/reference/plugin-dependency-tags.md)
-for the full mechanics and how each repo's release workflow automates it.
+for the full mechanics and how to wire it into your own release workflow.
