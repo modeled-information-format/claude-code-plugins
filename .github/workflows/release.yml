@@ -170,7 +170,7 @@ jobs:
     needs: [meta]
     permissions: { contents: read, security-events: write, actions: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-manifest-review.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
+      modeled-information-format/.github/.github/workflows/reusable-manifest-review.yml@1b416b97ff3ded8a49ae6873cc350eb1efb389bf
   # --- seam attestations: bind each verdict to the tarball digest -------------
   attest-sast:
     needs: [meta, build, gate-sast]
