@@ -1,4 +1,7 @@
 ---
+id: how-to-add-a-plugin-to-catalog
+type: procedural
+created: '2026-06-29T18:50:34-04:00'
 title: Add a plugin to the catalog
 diataxis_type: how-to
 ---
@@ -116,7 +119,34 @@ attestation evidence. The PR runs through `catalog-admission` (which re-verifies
 the same way) and **auto-merges once the gates are green**. A release whose
 attestations don't verify is never proposed.
 
-This catalog opts in by having the `modeled-information-format-ci` App installed — there is
-no per-repo workflow to add. (Dependabot can't do this: no Dependabot ecosystem
-parses the `git-subdir` + `sha` catalog pins; its `github-actions` updater here
-only keeps the workflow `uses:` pins fresh.)
+This catalog opts in by having the `catalog` GitHub App installed (ADR-011) —
+there is no per-repo workflow to add. (Dependabot can't do this: no Dependabot
+ecosystem parses the `git-subdir` + `sha` catalog pins; its `github-actions`
+updater here only keeps the workflow `uses:` pins fresh.)
+
+## If another plugin may depend on yours
+
+A plugin's `plugin.json` can declare a dependency on another plugin by a
+semver range instead of an exact SHA:
+
+```jsonc
+{"name": "mif-docs", "marketplace": "modeled-information-format", "version": "^0.3.1"}
+```
+
+The `marketplace` field is only needed when the dependency lives in a
+*different* marketplace than the declaring plugin, and the declaring plugin's
+own marketplace must allow-list `modeled-information-format` via
+`allowCrossMarketplaceDependenciesOn` or the install is blocked with a
+separate `cross-marketplace` error before it ever gets to tag resolution.
+Claude Code resolves that range by running `git ls-remote --tags` against
+**your** plugin's repo and only considers tags shaped
+`{your-plugin-name}--v{version}` — not the bare `vX.Y.Z` tag most repos here
+cut for their own releases. If that tag is missing, installing the dependent
+plugin fails with `no git tag satisfying <range>`, even though the exact
+release the catalog pins is correct.
+
+If your plugin might ever be depended on this way, your release process must
+also create that tag — `claude plugin tag --push` does this for you (it
+validates `plugin.json` and any enclosing marketplace entry agree first). See
+[the org's plugin dependency-tag reference](https://github.com/modeled-information-format/.github/blob/main/docs/reference/plugin-dependency-tags.md)
+for the full mechanics and how to wire it into your own release workflow.
