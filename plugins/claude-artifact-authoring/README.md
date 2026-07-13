@@ -3,7 +3,7 @@ id: claude-code-plugins-claude-artifact-authoring-readme
 type: semantic
 created: '2026-07-13T00:00:00Z'
 namespace: claude-code-plugins/claude-artifact-authoring
-modified: '2026-07-13T20:23:15.194Z'
+modified: '2026-07-13T20:47:19.929Z'
 temporal:
   '@type': TemporalMetadata
   validFrom: '2026-07-13T00:00:00Z'
@@ -43,9 +43,9 @@ graded, and discoverable across projects rather than one-off files.
 This plugin's design is specified in the architecture doc referenced by
 [Epic #40](https://github.com/modeled-information-format/claude-code-plugins/issues/40),
 which tracks its build via 14 Stories. This README will grow
-generator-by-generator as each Story lands; as of this Story (S1), the plugin
-scaffold and the central `XDG_DATA_HOME` artifact store exist — no generator
-is implemented yet.
+generator-by-generator as each Story lands; as of this Story (S2), the plugin
+scaffold, the central `XDG_DATA_HOME` artifact store, and the cross-cutting
+persistence pipeline exist — no generator is implemented yet.
 
 ## Internals
 
@@ -54,9 +54,25 @@ is implemented yet.
   validates `type`/`slug`/`filename` as safe single path segments (no path
   traversal), writes collision-safe version directories (`v1/`, `v2/`, ...),
   and promotes one version to `current.json` via an atomic write-then-rename.
-  `npm test` (Node's built-in test runner) covers resolution, versioning,
-  rollback, path-traversal rejection, and a **real cross-process** concurrency
-  test (separate OS processes, not same-thread async calls, so it actually
+- `lib/frontmatter-contract.mjs` — validates a drafted frontmatter against
+  the four elements every persisted artifact must carry: `citations[]`,
+  a `provenance` block (`sourceType: system_generated`), `temporal`
+  (`validFrom`/`recordedAt`/`ttl`), and `relationships[]` (`derived-from`,
+  `relates-to`, `harness:generated-for`).
+- `lib/mif-docs-dependency.mjs` — resolves the installed `mif-docs` plugin's
+  directory under `${CLAUDE_CONFIG_DIR:-~/.claude}/plugins/cache/...`, or
+  throws a clear, actionable error naming exactly what's missing — never a
+  silent no-op.
+- `lib/persist-artifact.mjs` — the deterministic half of the persistence
+  pipeline: validates the contract, confirms the dependency, and writes an
+  **unpromoted** draft version. `skills/persist-artifact/SKILL.md` documents
+  the full four-step sequence (draft via `mif-frontmatter` → write via this
+  module → stamp via `mif-provenance` → gate via `mif-validate`, only then
+  promote) that every generator Story (S6-S11) runs at the end of its own
+  pipeline.
+- `npm test` (Node's built-in test runner, 36 tests) covers all of the
+  above, including a **real cross-process** concurrency test for the store
+  (separate OS processes, not same-thread async calls, so it actually
   exercises the `EEXIST`-retry path under real contention).
 
 ## Install
