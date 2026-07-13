@@ -3,7 +3,7 @@ id: claude-code-plugins-claude-artifact-authoring-readme
 type: semantic
 created: '2026-07-13T00:00:00Z'
 namespace: claude-code-plugins/claude-artifact-authoring
-modified: '2026-07-13T21:38:20.565Z'
+modified: '2026-07-13T22:03:42.296Z'
 temporal:
   '@type': TemporalMetadata
   validFrom: '2026-07-13T00:00:00Z'
@@ -93,7 +93,9 @@ types) exist — no generator is implemented yet.
   eval-suites, delegation-safe subagents, Structured-Outputs-safe tool
   schemas).
 - `lib/golden-set.mjs` — loads and validates a golden set, and computes
-  agreement between a judge's verdicts and the human labels
+  agreement between a judge's verdicts and the golden set's recorded labels
+  (label provenance — human vs. self-labeled — is out of this module's
+  scope; see `skills/grade-artifact/SKILL.md`'s "Known limitation")
   (`computeAgreement`).
 - `lib/calibration.mjs` — records calibration runs (`recordCalibrationRun`)
   under
@@ -110,7 +112,7 @@ types) exist — no generator is implemented yet.
   explicitly flagged (`aboveTargetRange`) as a same-session calibration
   that a real independent human spot-audit should strengthen, not hidden as
   if it were a completed, permanent calibration.
-- `npm test` (Node's built-in test runner, 80 tests) covers all of the
+- `npm test` (Node's built-in test runner, 81 tests) covers all of the
   above, including a **real cross-process** concurrency test for the store
   (separate OS processes, not same-thread async calls, so it actually
   exercises the `EEXIST`-retry path under real contention), a real

@@ -11,8 +11,8 @@ function tempGoldenSetsDir() {
   return mkdtempSync(join(tmpdir(), 'caa-golden-set-test-'));
 }
 
-function writeGoldenSet(dir, artifactType, entries) {
-  writeFileSync(join(dir, `${artifactType}.json`), JSON.stringify({ artifactType, entries }));
+function writeGoldenSet(dir, artifactType, entries, { criteria = 'test criteria' } = {}) {
+  writeFileSync(join(dir, `${artifactType}.json`), JSON.stringify({ artifactType, criteria, entries }));
 }
 
 test('every one of the 6 declared artifact types has a real, valid, committed golden set', () => {
@@ -69,7 +69,11 @@ test('loadGoldenSet rejects a file whose artifactType field disagrees with the r
     // Renamed on disk to look like "prompts.json" but the field inside still says "goals".
     writeFileSync(
       join(dir, 'prompts.json'),
-      JSON.stringify({ artifactType: 'goals', entries: [{ id: 'x', label: 'good', content: 'c', rationale: 'r' }] }),
+      JSON.stringify({
+        artifactType: 'goals',
+        criteria: 'test criteria',
+        entries: [{ id: 'x', label: 'good', content: 'c', rationale: 'r' }],
+      }),
     );
     assert.throws(() => loadGoldenSet('prompts', { goldenSetsDir: dir }), /was loaded as "prompts"/);
   } finally {

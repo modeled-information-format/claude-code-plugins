@@ -60,6 +60,21 @@ test('assertCalibrated passes and returns the run when agreement meets the minim
   }
 });
 
+test("assertCalibrated's error message reports the actual minAgreement override, not the module default", () => {
+  const path = tempCalibrationLog();
+  try {
+    recordCalibrationRun(
+      { artifactType: 'subagents', agreementPct: 0.8, sampleSize: 4, judgeModel: 'claude-sonnet-5' },
+      { path },
+    );
+    // 80% agreement clears the default 75% target but not a caller-supplied
+    // 90% target — the thrown message must cite 90%, not the 75% default.
+    assert.throws(() => assertCalibrated('subagents', { path, minAgreement: 0.9 }), /is not calibrated.*90%/);
+  } finally {
+    rmSync(path, { force: true });
+  }
+});
+
 test('isCalibrated flags aboveTargetRange without treating it as uncalibrated', () => {
   const path = tempCalibrationLog();
   try {
@@ -149,7 +164,7 @@ test('recordCalibrationRun preserves per-entry mismatches for audit', () => {
         agreementPct: 0.75,
         sampleSize: 4,
         judgeModel: 'm',
-        mismatches: [{ id: 'x', humanLabel: 'good', judgeVerdict: 'bad' }],
+        mismatches: [{ id: 'x', goldenLabel: 'good', judgeVerdict: 'bad' }],
       },
       { path },
     );

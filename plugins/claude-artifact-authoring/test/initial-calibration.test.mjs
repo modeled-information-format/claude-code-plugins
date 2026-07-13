@@ -12,8 +12,9 @@ import { recordCalibrationRun, assertCalibrated, isCalibrated } from '../lib/cal
 // #61), performed by this authoring session independently re-applying each
 // golden set's stated `criteria` to each entry's `content` — NOT by
 // echoing the `label` field. See the per-entry reasoning this judging pass
-// produced, condensed to a verdict below; full reasoning for each call is
-// in the PR description.
+// produced, condensed to a verdict plus an inline comment giving the real
+// rationale below — not echoed in the PR description; this file is the
+// only place that reasoning is recorded.
 //
 // Known limitation, stated plainly rather than glossed over: this is a
 // same-session judge calibrating against a same-session-authored golden

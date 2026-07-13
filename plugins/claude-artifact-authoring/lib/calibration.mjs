@@ -57,11 +57,22 @@ export function readCalibrationRuns(artifactType, { path = resolveCalibrationLog
   return artifactType ? runs.filter((r) => r.artifactType === artifactType) : runs;
 }
 
+// Date.parse, not a raw string comparison — string comparison silently
+// picks the wrong "latest" run for any two timestamps not in the exact
+// same lexicographically-comparable format (e.g. a "+02:00" offset instead
+// of "Z"). An unparseable timestamp becomes -Infinity so it can never win
+// against a validly-timestamped run — this result gates auto-grading, so a
+// corrupt/missing timestamp must never be mistaken for "most recent."
+function parsedTime(run) {
+  const ms = Date.parse(run.timestamp);
+  return Number.isNaN(ms) ? -Infinity : ms;
+}
+
 /** The most recent recorded run for an artifact type, or null if none. */
 export function latestCalibration(artifactType, opts = {}) {
   const runs = readCalibrationRuns(artifactType, opts);
   if (runs.length === 0) return null;
-  return runs.reduce((latest, r) => (r.timestamp > latest.timestamp ? r : latest));
+  return runs.reduce((latest, r) => (parsedTime(r) > parsedTime(latest) ? r : latest));
 }
 
 /**
@@ -87,14 +98,14 @@ export function isCalibrated(artifactType, { minAgreement = MIN_TARGET_AGREEMENT
  * grader on record. Call this before letting any grader auto-grade
  * unsupervised.
  */
-export function assertCalibrated(artifactType, opts = {}) {
-  const { calibrated, run } = isCalibrated(artifactType, opts);
+export function assertCalibrated(artifactType, { minAgreement = MIN_TARGET_AGREEMENT, ...opts } = {}) {
+  const { calibrated, run } = isCalibrated(artifactType, { minAgreement, ...opts });
   if (!calibrated) {
     throw new Error(
       run
         ? `Grader for "${artifactType}" is not calibrated: latest run scored ` +
           `${(run.agreementPct * 100).toFixed(0)}% agreement (target >= ` +
-          `${(MIN_TARGET_AGREEMENT * 100).toFixed(0)}%). Re-run calibration before auto-grading.`
+          `${(minAgreement * 100).toFixed(0)}%). Re-run calibration before auto-grading.`
         : `Grader for "${artifactType}" has never been calibrated. Run calibration against its ` +
           'golden set before auto-grading unsupervised.',
     );
@@ -114,6 +125,11 @@ export function needsRecalibration(
 ) {
   const run = latestCalibration(artifactType, opts);
   if (!run) return true;
-  const ageMs = Date.now() - Date.parse(run.timestamp);
+  const runTime = Date.parse(run.timestamp);
+  // Fail closed: an unparseable timestamp must force recalibration, not
+  // silently compute `NaN > threshold` (always false) and be treated as
+  // perpetually "recent."
+  if (Number.isNaN(runTime)) return true;
+  const ageMs = Date.now() - runTime;
   return ageMs > maxAgeDays * 24 * 60 * 60 * 1000;
 }

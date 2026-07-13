@@ -7,9 +7,16 @@ argument-hint: "<artifact type> <draft content>"
 # grade-artifact
 
 The LLM-judgment half of calibrated grading (Epic #40 Story S4), paired with
-`lib/golden-set.mjs` and `lib/calibration.mjs`'s deterministic half. AD-4 is
-unconditional: **no LLM-as-judge grader auto-grades unsupervised until
-calibrated against a golden, human-labeled set.**
+`lib/golden-set.mjs` and `lib/calibration.mjs`'s deterministic half. AD-4's
+intent is unconditional: **no LLM-as-judge grader should auto-grade
+unsupervised until calibrated against a golden, human-labeled set.** What
+`assertCalibrated` actually enforces mechanically is narrower — a recorded
+agreement percentage at or above the target threshold — it has no way to
+verify the golden set's labels were independently human-authored rather than
+self-labeled by the same session producing the judge verdicts. See "Known
+limitation" below: this Story's own initial calibration is the self-labeled
+case, satisfying the mechanical gate without yet satisfying AD-4's full
+intent.
 
 ## The sequence
 
