@@ -74,14 +74,27 @@ export function validateFrontmatterContract(frontmatter) {
   }
 
   const temporal = frontmatter?.temporal;
-  if (!temporal?.validFrom) errors.push('temporal.validFrom is required.');
-  if (!temporal?.recordedAt) errors.push('temporal.recordedAt is required.');
-  if (!temporal?.ttl) errors.push('temporal.ttl is required.');
+  for (const field of ['validFrom', 'recordedAt']) {
+    const value = temporal?.[field];
+    if (!value) {
+      errors.push(`temporal.${field} is required.`);
+    } else if (Number.isNaN(Date.parse(value))) {
+      errors.push(`temporal.${field} "${value}" is not a valid ISO-8601 date-time.`);
+    }
+  }
+  if (!temporal?.ttl) {
+    errors.push('temporal.ttl is required.');
+  } else if (!/^P\d+[DMY]$/.test(temporal.ttl)) {
+    errors.push(`temporal.ttl "${temporal.ttl}" must be a simple ISO-8601 duration like "P90D".`);
+  }
 
   const relationships = Array.isArray(frontmatter?.relationships) ? frontmatter.relationships : [];
   for (const requiredType of REQUIRED_RELATIONSHIP_TYPES) {
-    if (!relationships.some((r) => r?.type === requiredType)) {
+    const entry = relationships.find((r) => r?.type === requiredType);
+    if (!entry) {
       errors.push(`relationships[] must include at least one entry with type "${requiredType}".`);
+    } else if (typeof entry.target !== 'string' || entry.target.length === 0) {
+      errors.push(`relationships[] entry with type "${requiredType}" must set a non-empty target.`);
     }
   }
 

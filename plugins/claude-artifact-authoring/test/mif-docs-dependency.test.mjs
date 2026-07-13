@@ -10,7 +10,7 @@ function fakeConfigDir() {
   return mkdtempSync(join(tmpdir(), 'caa-mifdocs-test-'));
 }
 
-function installFakeMifDocs(configDir, version) {
+function installFakeMifDocs(configDir, version, { omit = [] } = {}) {
   const dir = join(
     configDir,
     'plugins',
@@ -19,8 +19,16 @@ function installFakeMifDocs(configDir, version) {
     'mif-docs',
     version,
   );
-  mkdirSync(join(dir, 'scripts'), { recursive: true });
-  writeFileSync(join(dir, 'scripts', 'mif-validate.mjs'), '// fake\n');
+  const entryPoints = {
+    frontmatter: ['skills', 'mif-frontmatter', 'SKILL.md'],
+    provenance: ['scripts', 'mif-provenance.mjs'],
+    validate: ['scripts', 'mif-validate.mjs'],
+  };
+  for (const [name, segments] of Object.entries(entryPoints)) {
+    if (omit.includes(name)) continue;
+    mkdirSync(join(dir, ...segments.slice(0, -1)), { recursive: true });
+    writeFileSync(join(dir, ...segments), '// fake\n');
+  }
   return dir;
 }
 
@@ -43,6 +51,25 @@ test('resolveMifDocsDir returns null for a version dir missing the required scri
     assert.equal(resolveMifDocsDir({ CLAUDE_CONFIG_DIR: configDir }), null);
   } finally {
     rmSync(configDir, { recursive: true, force: true });
+  }
+});
+
+test('resolveMifDocsDir rejects a version missing any ONE of the three required entry points', () => {
+  // Checking only mif-validate.mjs previously let a dependency check pass
+  // while mif-frontmatter or mif-provenance were still missing, failing
+  // later with a confusing error instead of failing loud up front.
+  for (const missing of ['frontmatter', 'provenance', 'validate']) {
+    const configDir = fakeConfigDir();
+    try {
+      installFakeMifDocs(configDir, '0.4.1', { omit: [missing] });
+      assert.equal(
+        resolveMifDocsDir({ CLAUDE_CONFIG_DIR: configDir }),
+        null,
+        `expected a version missing ${missing} to be rejected`,
+      );
+    } finally {
+      rmSync(configDir, { recursive: true, force: true });
+    }
   }
 });
 

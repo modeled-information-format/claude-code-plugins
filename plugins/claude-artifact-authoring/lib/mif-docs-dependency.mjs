@@ -16,13 +16,27 @@ import { existsSync, readdirSync } from 'node:fs';
 
 const MARKETPLACE = 'modeled-information-format';
 const PLUGIN_NAME = 'mif-docs';
-const REQUIRED_SCRIPT = join('scripts', 'mif-validate.mjs');
+
+// All three entry points the documented persist-artifact sequence actually
+// depends on (skills/persist-artifact/SKILL.md steps 1, 3, 4) — checking
+// only mif-validate let the dependency check pass while mif-frontmatter or
+// mif-provenance were still missing, failing later with a confusing error
+// instead of failing loud up front.
+const REQUIRED_ENTRY_POINTS = Object.freeze([
+  join('skills', 'mif-frontmatter', 'SKILL.md'),
+  join('scripts', 'mif-provenance.mjs'),
+  join('scripts', 'mif-validate.mjs'),
+]);
 
 function pluginCacheRoots(env = process.env) {
   const configDir = env.CLAUDE_CONFIG_DIR && env.CLAUDE_CONFIG_DIR !== ''
     ? env.CLAUDE_CONFIG_DIR
     : join(homedir(), '.claude');
   return [join(configDir, 'plugins', 'cache', MARKETPLACE, PLUGIN_NAME)];
+}
+
+function hasAllRequiredEntryPoints(versionDir) {
+  return REQUIRED_ENTRY_POINTS.every((entry) => existsSync(join(versionDir, entry)));
 }
 
 // Best-effort version compare: numeric dot-segments win; a trailing
@@ -47,7 +61,7 @@ export function resolveMifDocsDir(env = process.env) {
   for (const root of pluginCacheRoots(env)) {
     if (!existsSync(root)) continue;
     const versions = readdirSync(root).filter((name) =>
-      existsSync(join(root, name, REQUIRED_SCRIPT)),
+      hasAllRequiredEntryPoints(join(root, name)),
     );
     if (versions.length === 0) continue;
     versions.sort(compareVersions);
@@ -67,8 +81,9 @@ export function assertMifDocsAvailable(env = process.env) {
   if (!dir) {
     throw new Error(
       `mif-docs plugin not found (searched ${pluginCacheRoots(env).join(', ')} for a version ` +
-        `containing ${REQUIRED_SCRIPT}). This plugin's persistence pipeline requires it — ` +
-        'install with `/plugin install mif-docs@modeled-information-format` and retry.',
+        `containing all of: ${REQUIRED_ENTRY_POINTS.join(', ')}). This plugin's persistence ` +
+        'pipeline requires it — install with `/plugin install mif-docs@modeled-information-format` ' +
+        'and retry.',
     );
   }
   return dir;

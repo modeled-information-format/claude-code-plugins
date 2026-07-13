@@ -43,8 +43,12 @@ export function persistDraftArtifact({
   filename,
   fullMarkdownContent,
   parsedFrontmatter,
-  root = resolveStoreRoot(),
   env = process.env,
+  // Must default from `env`, not a bare resolveStoreRoot() call — otherwise
+  // a caller (e.g. a test) that overrides `env` to redirect XDG_DATA_HOME
+  // silently gets the real process.env's root instead, since object
+  // destructuring defaults can only see earlier-listed bindings.
+  root = resolveStoreRoot(env),
 }) {
   assertFrontmatterContract(parsedFrontmatter);
   const mifDocsDir = assertMifDocsAvailable(env);

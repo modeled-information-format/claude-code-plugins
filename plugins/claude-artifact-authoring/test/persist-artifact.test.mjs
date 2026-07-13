@@ -14,8 +14,14 @@ function tempStoreRoot() {
 function tempConfigDirWithMifDocs() {
   const configDir = mkdtempSync(join(tmpdir(), 'caa-persist-test-config-'));
   const dir = join(configDir, 'plugins', 'cache', 'modeled-information-format', 'mif-docs', '0.4.1');
-  mkdirSync(join(dir, 'scripts'), { recursive: true });
-  writeFileSync(join(dir, 'scripts', 'mif-validate.mjs'), '// fake\n');
+  for (const segments of [
+    ['skills', 'mif-frontmatter', 'SKILL.md'],
+    ['scripts', 'mif-provenance.mjs'],
+    ['scripts', 'mif-validate.mjs'],
+  ]) {
+    mkdirSync(join(dir, ...segments.slice(0, -1)), { recursive: true });
+    writeFileSync(join(dir, ...segments), '// fake\n');
+  }
   return configDir;
 }
 
@@ -87,6 +93,33 @@ test('persistDraftArtifact rejects an invalid frontmatter before writing anythin
   } finally {
     rmSync(root, { recursive: true, force: true });
     rmSync(configDir, { recursive: true, force: true });
+  }
+});
+
+test('persistDraftArtifact derives the default XDG root from the SAME env it was given, not real process.env', () => {
+  // Regression: root used to default via a bare resolveStoreRoot() call
+  // that ignored the `env` override entirely, so a caller redirecting
+  // XDG_DATA_HOME via `env` (without also passing `root` explicitly) would
+  // silently write into the real process.env's store instead.
+  const configDir = tempConfigDirWithMifDocs();
+  const fakeDataHome = mkdtempSync(join(tmpdir(), 'caa-persist-test-xdg-'));
+  try {
+    const result = persistDraftArtifact({
+      type: 'prompts',
+      slug: 'env-derived-root',
+      filename: 'artifact.md',
+      fullMarkdownContent: '---\nid: x\n---\n# content',
+      parsedFrontmatter: VALID_FRONTMATTER,
+      env: { CLAUDE_CONFIG_DIR: configDir, XDG_DATA_HOME: fakeDataHome },
+      // deliberately NOT passing `root` — it must derive from `env` above
+    });
+    assert.ok(
+      result.path.startsWith(join(fakeDataHome, 'claude-artifact-authoring')),
+      `expected path under ${fakeDataHome}, got ${result.path}`,
+    );
+  } finally {
+    rmSync(configDir, { recursive: true, force: true });
+    rmSync(fakeDataHome, { recursive: true, force: true });
   }
 });
 

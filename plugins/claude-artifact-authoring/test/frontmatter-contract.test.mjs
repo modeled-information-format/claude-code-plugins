@@ -82,6 +82,32 @@ test('each missing relationship type is reported individually', () => {
   }
 });
 
+test('malformed temporal.validFrom/recordedAt (not a real date) fails, not just presence', () => {
+  const fm = validFrontmatter();
+  fm.temporal.validFrom = 'not-a-date';
+  const { valid, errors } = validateFrontmatterContract(fm);
+  assert.equal(valid, false);
+  assert.ok(errors.some((e) => e.includes('not a valid ISO-8601 date-time')));
+});
+
+test('malformed temporal.ttl (not a simple ISO-8601 duration) fails', () => {
+  const fm = validFrontmatter();
+  fm.temporal.ttl = '90 days';
+  const { valid, errors } = validateFrontmatterContract(fm);
+  assert.equal(valid, false);
+  assert.ok(errors.some((e) => e.includes('ISO-8601 duration')));
+});
+
+test('a relationship entry with the right type but no target fails', () => {
+  const fm = validFrontmatter();
+  fm.relationships = fm.relationships.map((r) =>
+    r.type === 'relates-to' ? { type: 'relates-to' } : r,
+  );
+  const { valid, errors } = validateFrontmatterContract(fm);
+  assert.equal(valid, false);
+  assert.ok(errors.some((e) => e.includes('relates-to') && e.includes('non-empty target')));
+});
+
 test('assertFrontmatterContract throws with every error joined', () => {
   assert.throws(
     () => assertFrontmatterContract(validFrontmatter({ citations: [] })),
