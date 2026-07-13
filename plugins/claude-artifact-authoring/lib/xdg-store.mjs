@@ -49,6 +49,21 @@ function assertArtifactType(type) {
   }
 }
 
+// slug/filename are external identifiers (generator-chosen, potentially
+// derived from user input) that get joined straight into filesystem paths.
+// Reject anything but a single safe path segment so a value like "../../etc"
+// or "foo/../../bar" can't escape the store root (path traversal).
+const SAFE_PATH_SEGMENT = /^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$/;
+
+function assertSafePathSegment(value, label) {
+  if (typeof value !== 'string' || !SAFE_PATH_SEGMENT.test(value)) {
+    throw new Error(
+      `Invalid ${label} "${value}" — must be a single path segment matching ${SAFE_PATH_SEGMENT} ` +
+        '(no "/", "\\", "..", or leading/trailing separators).',
+    );
+  }
+}
+
 /** Directory holding every slug for one artifact type. */
 export function typeDir(type, root = resolveStoreRoot()) {
   assertArtifactType(type);
@@ -57,6 +72,7 @@ export function typeDir(type, root = resolveStoreRoot()) {
 
 /** Directory holding every version of one named artifact. */
 export function slugDir(type, slug, root = resolveStoreRoot()) {
+  assertSafePathSegment(slug, 'slug');
   return join(typeDir(type, root), slug);
 }
 
@@ -152,6 +168,7 @@ export function claimNextVersionDir(type, slug, root = resolveStoreRoot()) {
  * mif-validate against the draft before it becomes current).
  */
 export function writeArtifactVersion(type, slug, filename, content, opts = {}) {
+  assertSafePathSegment(filename, 'filename');
   const { root = resolveStoreRoot(), promote = true } = opts;
   const { version, path: versionDir } = claimNextVersionDir(type, slug, root);
   writeFileSync(join(versionDir, filename), content);

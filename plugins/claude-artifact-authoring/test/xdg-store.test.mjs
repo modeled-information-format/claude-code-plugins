@@ -2,7 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { join, dirname } from 'node:path';
+import { spawn } from 'node:child_process';
 
 import {
   resolveStoreRoot,
@@ -14,23 +16,26 @@ import {
   ARTIFACT_TYPES,
 } from '../lib/xdg-store.mjs';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const WORKER_SCRIPT = join(__dirname, '..', 'test-fixtures', 'claim-version-worker.mjs');
+
 function tempHome() {
   return mkdtempSync(join(tmpdir(), 'caa-xdg-test-'));
 }
 
 test('resolveStoreRoot uses XDG_DATA_HOME when set', () => {
-  const root = resolveStoreRoot({ XDG_DATA_HOME: '/custom/data' });
-  assert.equal(root, '/custom/data/claude-artifact-authoring');
+  const root = resolveStoreRoot({ XDG_DATA_HOME: join('/custom', 'data') });
+  assert.equal(root, join('/custom', 'data', 'claude-artifact-authoring'));
 });
 
 test('resolveStoreRoot falls back to ~/.local/share when XDG_DATA_HOME is unset', () => {
   const root = resolveStoreRoot({});
-  assert.match(root, /\.local\/share\/claude-artifact-authoring$/);
+  assert.ok(root.endsWith(join('.local', 'share', 'claude-artifact-authoring')));
 });
 
 test('resolveStoreRoot ignores an empty-string XDG_DATA_HOME (matches gdlc xdg.ts convention)', () => {
   const root = resolveStoreRoot({ XDG_DATA_HOME: '' });
-  assert.match(root, /\.local\/share\/claude-artifact-authoring$/);
+  assert.ok(root.endsWith(join('.local', 'share', 'claude-artifact-authoring')));
 });
 
 test('every declared artifact type is a plain lowercase-hyphen slug', () => {
@@ -87,23 +92,6 @@ test('promote: false lets a caller validate a draft before it becomes current', 
   }
 });
 
-test('concurrent claimNextVersionDir calls never collide on the same version', async () => {
-  const root = tempHome();
-  try {
-    const claims = await Promise.all(
-      Array.from({ length: 12 }, () =>
-        Promise.resolve().then(() => claimNextVersionDir('loops', 'daily-digest', root)),
-      ),
-    );
-    const versions = claims.map((c) => c.version).sort((a, b) => a - b);
-    const unique = new Set(versions);
-    assert.equal(unique.size, 12, `expected 12 unique versions, got ${[...unique].length}`);
-    assert.deepEqual(versions, Array.from({ length: 12 }, (_, i) => i + 1));
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
-
 test('promoteVersion rejects a version that was never written', () => {
   const root = tempHome();
   try {
@@ -112,3 +100,90 @@ test('promoteVersion rejects a version that was never written', () => {
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test('slugDir rejects path-traversal and separator-bearing slugs', () => {
+  const root = tempHome();
+  try {
+    for (const bad of ['../escape', 'a/b', 'a\\b', '..', '', '.', 'trailing.']) {
+      assert.throws(
+        () => writeArtifactVersion('prompts', bad, 'artifact.md', 'x', { root }),
+        /Invalid slug/,
+        `expected "${bad}" to be rejected`,
+      );
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('writeArtifactVersion rejects path-traversal and separator-bearing filenames', () => {
+  const root = tempHome();
+  try {
+    for (const bad of ['../../etc/passwd', 'a/b.md', '..']) {
+      assert.throws(
+        () => writeArtifactVersion('prompts', 'safe-slug', bad, 'x', { root }),
+        /Invalid filename/,
+        `expected "${bad}" to be rejected`,
+      );
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('a safe slug with internal hyphens/dots/digits is accepted', () => {
+  const root = tempHome();
+  try {
+    const result = writeArtifactVersion('loops', 'daily-digest.v2-final', 'artifact.md', 'ok', {
+      root,
+    });
+    assert.equal(result.version, 1);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+function runWorker(root, type, slug) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [WORKER_SCRIPT, root, type, slug]);
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (d) => (stdout += d));
+    child.stderr.on('data', (d) => (stderr += d));
+    child.on('close', (code) => {
+      if (code !== 0) return reject(new Error(`worker exited ${code}: ${stderr}`));
+      resolve(Number(stdout));
+    });
+    child.on('error', reject);
+  });
+}
+
+test(
+  'claimNextVersionDir is collision-safe under REAL cross-process contention',
+  { timeout: 30_000 },
+  async () => {
+    const root = tempHome();
+    try {
+      const WORKER_COUNT = 12;
+      // Genuinely separate OS processes racing the same slug — unlike
+      // same-process async callbacks, these can interleave their syscalls,
+      // so this actually exercises claimNextVersionDir's EEXIST-retry path
+      // rather than just re-testing sequential correctness.
+      const versions = (
+        await Promise.all(
+          Array.from({ length: WORKER_COUNT }, () => runWorker(root, 'loops', 'daily-digest')),
+        )
+      ).sort((a, b) => a - b);
+
+      const unique = new Set(versions);
+      assert.equal(
+        unique.size,
+        WORKER_COUNT,
+        `expected ${WORKER_COUNT} unique versions across ${WORKER_COUNT} processes, got ${[...unique].length}: ${versions}`,
+      );
+      assert.deepEqual(versions, Array.from({ length: WORKER_COUNT }, (_, i) => i + 1));
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  },
+);

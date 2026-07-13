@@ -3,7 +3,7 @@ id: claude-code-plugins-claude-artifact-authoring-readme
 type: semantic
 created: '2026-07-13T00:00:00Z'
 namespace: claude-code-plugins/claude-artifact-authoring
-modified: '2026-07-13T20:15:07.486Z'
+modified: '2026-07-13T20:23:15.194Z'
 temporal:
   '@type': TemporalMetadata
   validFrom: '2026-07-13T00:00:00Z'
@@ -51,10 +51,13 @@ is implemented yet.
 
 - `lib/xdg-store.mjs` — the central artifact store: resolves
   `${XDG_DATA_HOME:-~/.local/share}/claude-artifact-authoring/<type>/<slug>/`,
-  writes collision-safe version directories (`v1/`, `v2/`, ...), and promotes
-  one version to `current.json` via an atomic write-then-rename. `npm test`
-  (Node's built-in test runner) covers resolution, versioning, rollback, and
-  a concurrent-write stress test.
+  validates `type`/`slug`/`filename` as safe single path segments (no path
+  traversal), writes collision-safe version directories (`v1/`, `v2/`, ...),
+  and promotes one version to `current.json` via an atomic write-then-rename.
+  `npm test` (Node's built-in test runner) covers resolution, versioning,
+  rollback, path-traversal rejection, and a **real cross-process** concurrency
+  test (separate OS processes, not same-thread async calls, so it actually
+  exercises the `EEXIST`-retry path under real contention).
 
 ## Install
 
