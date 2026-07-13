@@ -58,8 +58,9 @@ const SAFE_PATH_SEGMENT = /^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$/;
 function assertSafePathSegment(value, label) {
   if (typeof value !== 'string' || !SAFE_PATH_SEGMENT.test(value)) {
     throw new Error(
-      `Invalid ${label} "${value}" — must be a single path segment matching ${SAFE_PATH_SEGMENT} ` +
-        '(no "/", "\\", "..", or leading/trailing separators).',
+      `Invalid ${label} "${value}" — must be a single path segment: letters, digits, ".", "_", ` +
+        '"-" only, and must start and end with a letter or digit (so it can\'t be empty, ".", ' +
+        '"..", or begin/end with a separator-like character); "/" and "\\" are never allowed.',
     );
   }
 }
@@ -124,11 +125,17 @@ function writePointerAtomic(type, slug, version, root) {
   renameSync(tmp, target);
 }
 
-/** The artifact version currently promoted as "current", or null if none. */
+/**
+ * The artifact version currently promoted as "current", or null if none.
+ * `current.json` is on-disk state a process other than this module could
+ * have corrupted or hand-edited, so its `version` is validated the same way
+ * an externally-supplied version would be before it's trusted.
+ */
 export function getCurrentVersion(type, slug, root = resolveStoreRoot()) {
   const target = pointerPath(type, slug, root);
   if (!existsSync(target)) return null;
   const { version } = JSON.parse(readFileSync(target, 'utf8'));
+  assertSafeVersion(version);
   return version;
 }
 

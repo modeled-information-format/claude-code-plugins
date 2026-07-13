@@ -1,12 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
 import { spawn } from 'node:child_process';
-
-import { mkdirSync } from 'node:fs';
 
 import {
   resolveStoreRoot,
@@ -171,6 +169,32 @@ test('a safe slug with internal hyphens/dots/digits is accepted', () => {
       root,
     });
     assert.equal(result.version, 1);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('a slug containing an interior ".." (not the traversal token itself) is accepted', () => {
+  // "a..b" is a literal directory name, not a parent-reference: it doesn't
+  // start or end with "." so it's outside the boundary check, and it never
+  // reaches path.join() as a standalone ".." segment. Documents the actual
+  // boundary of what SAFE_PATH_SEGMENT rejects (raised in PR #103 review).
+  const root = tempHome();
+  try {
+    const result = writeArtifactVersion('loops', 'a..b', 'artifact.md', 'ok', { root });
+    assert.equal(result.version, 1);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('getCurrentVersion rejects a corrupted current.json rather than trusting it', () => {
+  const root = tempHome();
+  try {
+    writeArtifactVersion('goals', 'tampered', 'artifact.md', 'ok', { root });
+    const pointer = join(slugDir('goals', 'tampered', root), 'current.json');
+    writeFileSync(pointer, JSON.stringify({ version: '../../escape' }));
+    assert.throws(() => getCurrentVersion('goals', 'tampered', root), /Invalid version/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
