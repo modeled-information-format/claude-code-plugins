@@ -25,6 +25,11 @@ export const REQUIRED_RELATIONSHIP_TYPES = Object.freeze([
   'harness:generated-for',
 ]);
 
+// A full RFC3339 date-TIME, with a mandatory time component and offset
+// ("Z" or "+HH:MM"/"-HH:MM") — a date-only string like "2026-07-13" is
+// deliberately rejected even though Date.parse() would accept it.
+const RFC3339_DATE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
+
 /**
  * Per-artifact-type ttl horizons (F: prompt-persistence-design-blueprint —
  * P90D for a prompt vs. a finding's typical P1Y, since prompt/loop guidance
@@ -78,8 +83,12 @@ export function validateFrontmatterContract(frontmatter) {
     const value = temporal?.[field];
     if (!value) {
       errors.push(`temporal.${field} is required.`);
-    } else if (Number.isNaN(Date.parse(value))) {
-      errors.push(`temporal.${field} "${value}" is not a valid ISO-8601 date-time.`);
+    } else if (!RFC3339_DATE_TIME.test(value) || Number.isNaN(Date.parse(value))) {
+      // Date.parse() alone is too permissive — it accepts date-only strings
+      // like "2026-07-13" even though the contract requires a full
+      // date-TIME. The regex enforces the shape; Date.parse() still catches
+      // shape-valid-but-semantically-invalid values (e.g. month 13).
+      errors.push(`temporal.${field} "${value}" is not a valid RFC3339 date-time (e.g. "2026-07-13T00:00:00Z").`);
     }
   }
   if (!temporal?.ttl) {

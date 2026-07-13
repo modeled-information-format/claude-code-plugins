@@ -87,7 +87,17 @@ test('malformed temporal.validFrom/recordedAt (not a real date) fails, not just 
   fm.temporal.validFrom = 'not-a-date';
   const { valid, errors } = validateFrontmatterContract(fm);
   assert.equal(valid, false);
-  assert.ok(errors.some((e) => e.includes('not a valid ISO-8601 date-time')));
+  assert.ok(errors.some((e) => e.includes('not a valid RFC3339 date-time')));
+});
+
+test('a date-only value (no time component) is rejected — the contract requires a date-TIME', () => {
+  // Date.parse("2026-07-13") succeeds, so this must be checked by shape,
+  // not just parseability, or an incomplete timestamp silently passes.
+  const fm = validFrontmatter();
+  fm.temporal.validFrom = '2026-07-13';
+  const { valid, errors } = validateFrontmatterContract(fm);
+  assert.equal(valid, false);
+  assert.ok(errors.some((e) => e.includes('validFrom') && e.includes('not a valid RFC3339 date-time')));
 });
 
 test('malformed temporal.ttl (not a simple ISO-8601 duration) fails', () => {
