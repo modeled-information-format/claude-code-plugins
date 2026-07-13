@@ -15,6 +15,7 @@
 import { assertFrontmatterContract } from './frontmatter-contract.mjs';
 import { assertMifDocsAvailable } from './mif-docs-dependency.mjs';
 import { writeArtifactVersion, resolveStoreRoot } from './xdg-store.mjs';
+import { startSpan, endSpan, writeSpan, resolveTraceLogPath } from './trace.mjs';
 
 /**
  * Write a drafted artifact into the XDG store as an unpromoted draft
@@ -35,7 +36,16 @@ import { writeArtifactVersion, resolveStoreRoot } from './xdg-store.mjs';
  *   an object, for contract validation before writing
  * @param {string} [args.root] - override the XDG store root (tests only)
  * @param {object} [args.env] - override process.env (tests only)
- * @returns {{version:number, path:string, versionDir:string, mifDocsDir:string}}
+ * @param {string} [args.traceId] - if provided (from a "generation-request"
+ *   span the calling generator started), this write is recorded as a
+ *   child "persist-draft-artifact" span under the same trace — the
+ *   request -> artifact link the trace substrate (Story S3) exists for.
+ *   Omit to persist without tracing (e.g. in isolated tests).
+ * @param {string} [args.parentSpanId] - the request span to nest under.
+ *   REQUIRED whenever `traceId` is set (see below) — there is no such thing
+ *   as an intentionally-unlinked persist span in this pipeline.
+ * @param {string} [args.traceLogPath] - override the trace log path (tests only)
+ * @returns {{version:number, path:string, versionDir:string, mifDocsDir:string, spanId:(string|null)}}
  */
 export function persistDraftArtifact({
   type,
@@ -49,9 +59,29 @@ export function persistDraftArtifact({
   // silently gets the real process.env's root instead, since object
   // destructuring defaults can only see earlier-listed bindings.
   root = resolveStoreRoot(env),
+  traceId,
+  parentSpanId = null,
+  traceLogPath = resolveTraceLogPath(env),
 }) {
+  // A persist span with no parent silently breaks the request -> artifact
+  // linkage this whole feature exists for — it would look like a root span,
+  // not a child of the generator's own request span. Fail fast instead of
+  // producing a trace that looks connected but isn't.
+  if (traceId && !parentSpanId) {
+    throw new Error(
+      'persistDraftArtifact: traceId was provided without parentSpanId. A persist span with no ' +
+        "parent breaks the request -> artifact link the trace substrate exists for — pass the " +
+        'generator\'s own "generation-request" span ID as parentSpanId, or omit traceId entirely ' +
+        'to persist without tracing.',
+    );
+  }
+
   assertFrontmatterContract(parsedFrontmatter);
   const mifDocsDir = assertMifDocsAvailable(env);
+
+  const span = traceId
+    ? startSpan({ traceId, parentSpanId, name: 'persist-draft-artifact', attributes: { type, slug } })
+    : null;
 
   const { version, path, versionDir } = writeArtifactVersion(
     type,
@@ -61,5 +91,20 @@ export function persistDraftArtifact({
     { root, promote: false },
   );
 
-  return { version, path, versionDir, mifDocsDir };
+  // Tracing is best-effort: the artifact version above is already written
+  // to disk by this point, so a tracing failure (e.g. an unwritable
+  // XDG_STATE_HOME) must never surface as this call throwing — a caller
+  // seeing an exception here would reasonably treat persistence itself as
+  // failed and retry, producing a duplicate version on top of the one that
+  // actually succeeded.
+  if (span) {
+    try {
+      writeSpan(endSpan(span, { attributes: { version, path } }), { path: traceLogPath });
+    } catch {
+      // Swallow: the artifact is safely persisted regardless of whether
+      // its trace span could be recorded.
+    }
+  }
+
+  return { version, path, versionDir, mifDocsDir, spanId: span?.spanId ?? null };
 }

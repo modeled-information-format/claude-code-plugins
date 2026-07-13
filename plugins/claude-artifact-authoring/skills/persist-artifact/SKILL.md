@@ -36,7 +36,13 @@ not.
    the central XDG store (`lib/xdg-store.mjs`) as an **unpromoted** version
    (`promote: false`). Unpromoted means `getCurrentVersion` still returns
    whatever it returned before this call; the new version isn't "current"
-   yet. Returns `{ version, path, versionDir, mifDocsDir }`.
+   yet. Returns `{ version, path, versionDir, mifDocsDir, spanId }`.
+   Pass `traceId` (and `parentSpanId`, from the generator's own
+   "generation-request" span — see `lib/trace.mjs`, Story S3) to record this
+   write as a linked span in the trace substrate; the NFR this satisfies is
+   "emit a trace linking the request, the artifact, and its evaluation," so
+   the generator's own eval step should likewise pass this call's returned
+   `spanId` as ITS `parentSpanId` when it records the evaluation span.
 
 3. **Stamp witnessed provenance — `mif-docs:mif-provenance` skill, `stamp` verb.**
    Run `mif-provenance stamp <path>` (the `path` from step 2) against the

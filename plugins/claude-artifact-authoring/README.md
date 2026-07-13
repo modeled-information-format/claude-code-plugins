@@ -3,7 +3,7 @@ id: claude-code-plugins-claude-artifact-authoring-readme
 type: semantic
 created: '2026-07-13T00:00:00Z'
 namespace: claude-code-plugins/claude-artifact-authoring
-modified: '2026-07-13T20:47:19.929Z'
+modified: '2026-07-13T21:20:45.950Z'
 temporal:
   '@type': TemporalMetadata
   validFrom: '2026-07-13T00:00:00Z'
@@ -43,9 +43,10 @@ graded, and discoverable across projects rather than one-off files.
 This plugin's design is specified in the architecture doc referenced by
 [Epic #40](https://github.com/modeled-information-format/claude-code-plugins/issues/40),
 which tracks its build via 14 Stories. This README will grow
-generator-by-generator as each Story lands; as of this Story (S2), the plugin
-scaffold, the central `XDG_DATA_HOME` artifact store, and the cross-cutting
-persistence pipeline exist — no generator is implemented yet.
+generator-by-generator as each Story lands; as of this Story (S3), the plugin
+scaffold, the central `XDG_DATA_HOME` artifact store, the cross-cutting
+persistence pipeline, and the OTel-compatible trace substrate exist — no
+generator is implemented yet.
 
 ## Internals
 
@@ -57,23 +58,38 @@ persistence pipeline exist — no generator is implemented yet.
 - `lib/frontmatter-contract.mjs` — validates a drafted frontmatter against
   the four elements every persisted artifact must carry: `citations[]`,
   a `provenance` block (`sourceType: system_generated`), `temporal`
-  (`validFrom`/`recordedAt`/`ttl`), and `relationships[]` (`derived-from`,
-  `relates-to`, `harness:generated-for`).
+  (`validFrom`/`recordedAt`/`ttl`, checked as a real RFC3339 date-time and a
+  simple ISO-8601 duration, not just presence), and `relationships[]`
+  (`derived-from`, `relates-to`, `harness:generated-for`, each requiring a
+  non-empty `target`).
 - `lib/mif-docs-dependency.mjs` — resolves the installed `mif-docs` plugin's
-  directory under `${CLAUDE_CONFIG_DIR:-~/.claude}/plugins/cache/...`, or
-  throws a clear, actionable error naming exactly what's missing — never a
-  silent no-op.
+  directory under `${CLAUDE_CONFIG_DIR:-~/.claude}/plugins/cache/...`
+  (requiring all three entry points the persistence sequence depends on:
+  `mif-frontmatter`, `mif-provenance`, `mif-validate`), or throws a clear,
+  actionable error naming exactly what's missing — never a silent no-op.
+- `lib/trace.mjs` — a minimal, portable OTel-compatible trace substrate: no
+  SDK dependency, spans in a simplified JSON representation (OTel-spec ID
+  shapes and timestamp semantics, but not the OTLP/proto JSON encoding — a
+  transform step would be needed for a real OTLP collector) appended as
+  JSON Lines under
+  `${XDG_STATE_HOME:-~/.local/state}/claude-artifact-authoring/traces.jsonl`
+  (a different XDG category from the artifact store — telemetry, not durable
+  content). `startSpan`/`endSpan`/`writeSpan`/`readTraceSpans` are the whole
+  API; no hosted platform, per AD-7.
 - `lib/persist-artifact.mjs` — the deterministic half of the persistence
-  pipeline: validates the contract, confirms the dependency, and writes an
-  **unpromoted** draft version. `skills/persist-artifact/SKILL.md` documents
-  the full four-step sequence (draft via `mif-frontmatter` → write via this
-  module → stamp via `mif-provenance` → gate via `mif-validate`, only then
-  promote) that every generator Story (S6-S11) runs at the end of its own
-  pipeline.
-- `npm test` (Node's built-in test runner, 36 tests) covers all of the
+  pipeline: validates the contract, confirms the dependency, writes an
+  **unpromoted** draft version, and — when a generator passes `traceId` from
+  its own "generation-request" span — records the write as a linked child
+  span, so a trace can be walked from request → artifact → (eventually)
+  evaluation. `skills/persist-artifact/SKILL.md` documents the full
+  four-step sequence (draft via `mif-frontmatter` → write via this module →
+  stamp via `mif-provenance` → gate via `mif-validate`, only then promote)
+  that every generator Story (S6-S11) runs at the end of its own pipeline.
+- `npm test` (Node's built-in test runner, 56 tests) covers all of the
   above, including a **real cross-process** concurrency test for the store
   (separate OS processes, not same-thread async calls, so it actually
-  exercises the `EEXIST`-retry path under real contention).
+  exercises the `EEXIST`-retry path under real contention) and a real
+  request → artifact → evaluation trace round-trip.
 
 ## Install
 
