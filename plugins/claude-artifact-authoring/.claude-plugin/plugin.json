@@ -1,0 +1,27 @@
+{
+  "name": "claude-artifact-authoring",
+  "displayName": "Claude Artifact Authoring",
+  "version": "0.1.0",
+  "description": "Generates high-quality AI-interaction artifacts (prompts, goals, loops, eval-suites, subagent definitions, tool schemas) from a request plus grounding sources, each with a scored checklist, calibrated eval, and MIF Level-3 provenance.",
+  "author": {
+    "name": "modeled-information-format"
+  },
+  "homepage": "https://github.com/modeled-information-format/claude-code-plugins/tree/main/plugins/claude-artifact-authoring",
+  "repository": "https://github.com/modeled-information-format/claude-code-plugins",
+  "license": "MIT",
+  "keywords": [
+    "prompt-engineering",
+    "eval",
+    "provenance",
+    "mif",
+    "agent-authoring",
+    "structured-outputs"
+  ],
+  "dependencies": [
+    {
+      "name": "mif-docs",
+      "marketplace": "modeled-information-format",
+      "version": ">=0.4.1 <1.0.0"
+    }
+  ]
+}
