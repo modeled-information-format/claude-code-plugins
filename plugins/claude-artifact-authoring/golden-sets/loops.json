@@ -1,0 +1,30 @@
+{
+  "artifactType": "loops",
+  "criteria": "Classification against Anthropic's six named agent patterns (prompt chaining, routing, parallelization, orchestrator-workers, evaluator-optimizer, fully autonomous), refusing to default to a fully autonomous loop when a bounded pattern suffices, and a mandatory explicit stop condition.",
+  "entries": [
+    {
+      "id": "good-evaluator-optimizer-loop",
+      "label": "good",
+      "content": "Pattern: evaluator-optimizer. Generate a draft response, score it against a rubric (0-1), and if the score is below 0.9, feed the rubric's specific failure points back into a regeneration prompt. Stop condition: max 5 iterations, OR score >= 0.9, whichever comes first. On stop-by-iteration-limit without reaching 0.9, report the final score and the unresolved rubric items rather than silently returning the last draft as if it passed.",
+      "rationale": "Names one of the six patterns explicitly and justifies it (iterative quality improvement against a scorable rubric is exactly evaluator-optimizer's use case). Explicit dual stop condition (iteration cap OR score threshold). Declares what happens on each exit path, including the failure case — not silently glossing over a loop that never converged."
+    },
+    {
+      "id": "good-bounded-parallel-research-loop",
+      "label": "good",
+      "content": "Pattern: parallelization. Fan out 4 independent search queries covering different angles of the topic, run them concurrently, then synthesize the results into one report. No further looping after synthesis — this is a single fan-out/fan-in pass, not an iterative loop. Stop condition: complete after the synthesis step; if any of the 4 searches fails, proceed with the remaining results and note the gap rather than retrying indefinitely.",
+      "rationale": "Correctly identifies this as parallelization (not a \"loop\" needing iteration at all) rather than defaulting to autonomous behavior for something that's actually a single bounded fan-out/fan-in. Explicit, simple stop condition and explicit failure handling (proceed with a noted gap, not unbounded retry)."
+    },
+    {
+      "id": "bad-unbounded-keep-going-loop",
+      "label": "bad",
+      "content": "Keep working on the task autonomously until it's fully done. Check in periodically but otherwise just keep going and fix whatever needs fixing.",
+      "rationale": "Defaults straight to a fully autonomous loop with no named pattern and no consideration of whether a bounded pattern would suffice — the exact anti-pattern the architecture doc warns against. No stop condition at all (\"until it's fully done\" is not a check, it's the absence of one). This is the AutoGPT/BabyAGI unbounded-drift failure mode by name."
+    },
+    {
+      "id": "bad-loop-with-soft-stop",
+      "label": "bad",
+      "content": "Pattern: fully autonomous. Run until the task feels complete, using your best judgment about when to stop. Try not to run for too long.",
+      "rationale": "Declares \"fully autonomous\" without ever asking whether a bounded pattern (routing, evaluator-optimizer, etc.) would have sufficed for whatever the underlying task actually is. \"Feels complete\" and \"try not to run for too long\" are not stop conditions — they're vague, unenforceable prose exactly like a goal with no verify command."
+    }
+  ]
+}

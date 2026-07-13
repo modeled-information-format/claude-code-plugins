@@ -1,0 +1,30 @@
+{
+  "artifactType": "goals",
+  "criteria": "The two-domain-experts-reach-the-same-verdict test, SMART criteria, and the checks[].verify discipline: every completion condition names an executable verification command, not prose.",
+  "entries": [
+    {
+      "id": "good-auth-tests-goal",
+      "label": "good",
+      "content": "All tests in `test/auth` pass (`pytest test/auth -q` shown exiting 0) and `ruff check src/auth` reports no violations, with both command outputs printed in the transcript. Constraints: change only files under `src/auth`; add no new dependencies; do not modify or delete any test; do not force-push. Stop after 15 turns and report the remaining failures if the suite cannot be made green.",
+      "rationale": "Every completion condition names an executable verify command (`pytest test/auth -q` exiting 0, `ruff check` reporting no violations). Two domain experts reading this would reach the same pass/fail verdict — there is no ambiguity about what \"done\" means. SMART: specific (named test dir), measurable (exit code), achievable, relevant, time-bound (15-turn stop)."
+    },
+    {
+      "id": "good-readme-quickstart-goal",
+      "label": "good",
+      "content": "README.md has a Quickstart section with copy-pasteable install and run commands, and `markdownlint README.md` reports no errors (output shown in the transcript). Constraints: edit only README.md; change no code or other docs. Stop after 10 turns and report blockers if lint cannot pass.",
+      "rationale": "Names a concrete structural requirement (a Quickstart section with copy-pasteable commands — checkable by a human reader) plus an automated verify command (`markdownlint`). Constraints bound the blast radius. A reference-solution smoke test is implicit: the Quickstart commands, if followed, must actually work — that's the achievability bar."
+    },
+    {
+      "id": "bad-make-it-better-goal",
+      "label": "bad",
+      "content": "Make the codebase better. Clean things up, fix any bugs you find, and improve performance where possible.",
+      "rationale": "No executable verification command anywhere — \"better\", \"cleaned up\", and \"improved\" are not gradable. Two domain experts given only this text would disagree wildly on what counts as done. Fails SMART on specific, measurable, and time-bound. No constraints on scope, so blast radius is unbounded."
+    },
+    {
+      "id": "bad-vague-feature-goal",
+      "label": "bad",
+      "content": "Add a dashboard feature that shows useful analytics to users in a nice way.",
+      "rationale": "\"Useful\" and \"nice way\" are subjective judgments, not checks. No verify command — how would a session know it's done? No constraints, no stop condition, no reference to what data the dashboard should show or how correctness would be confirmed."
+    }
+  ]
+}
