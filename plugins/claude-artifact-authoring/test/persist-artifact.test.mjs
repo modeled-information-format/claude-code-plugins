@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { randomBytes } from 'node:crypto';
 
 import { persistDraftArtifact } from '../lib/persist-artifact.mjs';
 import { getCurrentVersion, slugDir } from '../lib/xdg-store.mjs';
@@ -78,7 +79,10 @@ test('persistDraftArtifact writes an unpromoted draft version when both precondi
 test('persistDraftArtifact records a persist-draft-artifact span as a child of the caller-supplied request span', () => {
   const root = tempStoreRoot();
   const configDir = tempConfigDirWithMifDocs();
-  const traceLogPath = join(mkdtempSync(join(tmpdir(), 'caa-persist-trace-test-')), 'traces.jsonl');
+  // A unique path directly under tmpdir(), not a directory created via
+  // mkdtempSync — persistDraftArtifact's own mkdirSync(dirname) call is a
+  // no-op against tmpdir() itself, so there's no directory left behind.
+  const traceLogPath = join(tmpdir(), `caa-persist-trace-test-${randomBytes(8).toString('hex')}.jsonl`);
   try {
     const traceId = newTraceId();
     const requestSpanId = newSpanId(); // simulates the generator's own "generation-request" span
@@ -110,6 +114,32 @@ test('persistDraftArtifact records a persist-draft-artifact span as a child of t
     rmSync(root, { recursive: true, force: true });
     rmSync(configDir, { recursive: true, force: true });
     rmSync(traceLogPath, { force: true });
+  }
+});
+
+test('persistDraftArtifact rejects traceId without parentSpanId before writing anything (would silently produce an unlinked span)', () => {
+  const root = tempStoreRoot();
+  const configDir = tempConfigDirWithMifDocs();
+  try {
+    assert.throws(
+      () =>
+        persistDraftArtifact({
+          type: 'goals',
+          slug: 'orphan-span-check',
+          filename: 'artifact.md',
+          fullMarkdownContent: '---\nid: x\n---\n# content',
+          parsedFrontmatter: VALID_FRONTMATTER,
+          root,
+          env: { CLAUDE_CONFIG_DIR: configDir },
+          traceId: newTraceId(),
+          // parentSpanId deliberately omitted
+        }),
+      /traceId was provided without parentSpanId/,
+    );
+    assert.ok(!existsSync(slugDir('goals', 'orphan-span-check', root)));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+    rmSync(configDir, { recursive: true, force: true });
   }
 });
 

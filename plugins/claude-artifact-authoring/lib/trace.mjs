@@ -1,9 +1,14 @@
 // Minimal, portable OTel-compatible trace substrate (Epic #40 Story S3).
 // No hosted platform, no SDK dependency (this plugin stays zero-runtime-dep,
-// per AD-7's portability decision) — spans are OTLP-JSON-shaped objects
-// appended as JSON Lines to a local file, which any OTLP-JSON-aware
-// collector can ingest, or which can be read back directly (see
-// `readTraceSpans`) for local inspection/testing.
+// per AD-7's portability decision). Spans are a SIMPLIFIED JSON
+// representation appended as JSON Lines to a local file — readable directly
+// via `readTraceSpans` for local inspection/testing, but this is NOT the
+// OTLP/proto JSON mapping (that encodes `attributes` as a
+// key/typed-value array and `status` as a `{code, message}` object, plus
+// resource/scope wrapping this format omits). A real OTLP collector would
+// need a transform step, not direct ingestion, despite the shared
+// vocabulary — see the field-level notes below for exactly what does and
+// doesn't match the OTel spec.
 //
 // Location: trace data is operational telemetry (logs/history), not durable
 // generated content, so it belongs under XDG_STATE_HOME — a different XDG
@@ -11,10 +16,11 @@
 // a category no existing tool in this org uses correctly yet (gdlc puts
 // everything, including its cache, under XDG_CONFIG_HOME).
 //
-// IDs and timestamps follow the OpenTelemetry spec's shapes (128-bit hex
-// trace ID, 64-bit hex span ID, Unix-epoch nanoseconds as a BigInt-safe
-// string) so a real OTLP collector can ingest this file's lines directly,
-// even though nothing here links against the (heavy) OTel SDK.
+// What DOES match the OpenTelemetry spec: ID shapes (128-bit hex trace ID,
+// 64-bit hex span ID) and timestamp semantics (Unix-epoch nanoseconds, as a
+// BigInt-safe decimal string). What doesn't: the JSON encoding of
+// `attributes` (plain object here, not OTLP's typed key/value array) and
+// `status` (a bare string here, not OTLP's `{code, message}` object).
 
 import { homedir } from 'node:os';
 import { join, dirname } from 'node:path';

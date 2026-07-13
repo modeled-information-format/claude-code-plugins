@@ -42,6 +42,8 @@ import { startSpan, endSpan, writeSpan, resolveTraceLogPath } from './trace.mjs'
  *   request -> artifact link the trace substrate (Story S3) exists for.
  *   Omit to persist without tracing (e.g. in isolated tests).
  * @param {string} [args.parentSpanId] - the request span to nest under.
+ *   REQUIRED whenever `traceId` is set (see below) — there is no such thing
+ *   as an intentionally-unlinked persist span in this pipeline.
  * @param {string} [args.traceLogPath] - override the trace log path (tests only)
  * @returns {{version:number, path:string, versionDir:string, mifDocsDir:string, spanId:(string|null)}}
  */
@@ -61,6 +63,19 @@ export function persistDraftArtifact({
   parentSpanId = null,
   traceLogPath = resolveTraceLogPath(env),
 }) {
+  // A persist span with no parent silently breaks the request -> artifact
+  // linkage this whole feature exists for — it would look like a root span,
+  // not a child of the generator's own request span. Fail fast instead of
+  // producing a trace that looks connected but isn't.
+  if (traceId && !parentSpanId) {
+    throw new Error(
+      'persistDraftArtifact: traceId was provided without parentSpanId. A persist span with no ' +
+        "parent breaks the request -> artifact link the trace substrate exists for — pass the " +
+        'generator\'s own "generation-request" span ID as parentSpanId, or omit traceId entirely ' +
+        'to persist without tracing.',
+    );
+  }
+
   assertFrontmatterContract(parsedFrontmatter);
   const mifDocsDir = assertMifDocsAvailable(env);
 

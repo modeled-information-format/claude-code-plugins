@@ -3,7 +3,7 @@ id: claude-code-plugins-claude-artifact-authoring-readme
 type: semantic
 created: '2026-07-13T00:00:00Z'
 namespace: claude-code-plugins/claude-artifact-authoring
-modified: '2026-07-13T21:12:41.528Z'
+modified: '2026-07-13T21:20:45.950Z'
 temporal:
   '@type': TemporalMetadata
   validFrom: '2026-07-13T00:00:00Z'
@@ -68,8 +68,11 @@ generator is implemented yet.
   `mif-frontmatter`, `mif-provenance`, `mif-validate`), or throws a clear,
   actionable error naming exactly what's missing — never a silent no-op.
 - `lib/trace.mjs` — a minimal, portable OTel-compatible trace substrate: no
-  SDK dependency, spans are OTLP-JSON-shaped objects appended as JSON Lines
-  under `${XDG_STATE_HOME:-~/.local/state}/claude-artifact-authoring/traces.jsonl`
+  SDK dependency, spans in a simplified JSON representation (OTel-spec ID
+  shapes and timestamp semantics, but not the OTLP/proto JSON encoding — a
+  transform step would be needed for a real OTLP collector) appended as
+  JSON Lines under
+  `${XDG_STATE_HOME:-~/.local/state}/claude-artifact-authoring/traces.jsonl`
   (a different XDG category from the artifact store — telemetry, not durable
   content). `startSpan`/`endSpan`/`writeSpan`/`readTraceSpans` are the whole
   API; no hosted platform, per AD-7.

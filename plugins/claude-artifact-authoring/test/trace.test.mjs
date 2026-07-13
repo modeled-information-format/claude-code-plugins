@@ -1,8 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { randomBytes } from 'node:crypto';
 
 import {
   resolveTraceLogPath,
@@ -14,9 +15,12 @@ import {
   readTraceSpans,
 } from '../lib/trace.mjs';
 
+// A unique path directly under the OS temp dir (which already exists), not
+// a directory created via mkdtempSync — writeSpan's own mkdirSync(dirname)
+// call is a no-op against tmpdir() itself, so there's no extra directory
+// for tests to remember to clean up (rmSync on just the file is enough).
 function tempTraceLog() {
-  const dir = mkdtempSync(join(tmpdir(), 'caa-trace-test-'));
-  return join(dir, 'traces.jsonl');
+  return join(tmpdir(), `caa-trace-test-${randomBytes(8).toString('hex')}.jsonl`);
 }
 
 test('resolveTraceLogPath uses XDG_STATE_HOME when set, distinct from the XDG_DATA_HOME artifact store', () => {
@@ -96,7 +100,8 @@ test('readTraceSpans filters by traceId when multiple traces share one log file'
 });
 
 test('readTraceSpans returns [] for a log that does not exist yet, rather than throwing', () => {
-  const missingPath = join(mkdtempSync(join(tmpdir(), 'caa-trace-test-')), 'nope', 'traces.jsonl');
+  // Nothing on disk is created for this — the path just needs to not exist.
+  const missingPath = join(tmpdir(), `caa-trace-test-nope-${randomBytes(8).toString('hex')}`, 'traces.jsonl');
   assert.deepEqual(readTraceSpans(undefined, { path: missingPath }), []);
 });
 
