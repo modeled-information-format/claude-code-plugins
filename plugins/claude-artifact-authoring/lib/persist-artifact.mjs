@@ -91,8 +91,19 @@ export function persistDraftArtifact({
     { root, promote: false },
   );
 
+  // Tracing is best-effort: the artifact version above is already written
+  // to disk by this point, so a tracing failure (e.g. an unwritable
+  // XDG_STATE_HOME) must never surface as this call throwing — a caller
+  // seeing an exception here would reasonably treat persistence itself as
+  // failed and retry, producing a duplicate version on top of the one that
+  // actually succeeded.
   if (span) {
-    writeSpan(endSpan(span, { attributes: { version, path } }), { path: traceLogPath });
+    try {
+      writeSpan(endSpan(span, { attributes: { version, path } }), { path: traceLogPath });
+    } catch {
+      // Swallow: the artifact is safely persisted regardless of whether
+      // its trace span could be recorded.
+    }
   }
 
   return { version, path, versionDir, mifDocsDir, spanId: span?.spanId ?? null };

@@ -97,11 +97,23 @@ export function writeSpan(span, { path = resolveTraceLogPath() } = {}) {
 /**
  * Read back every span for a given trace ID (or all spans, if `traceId` is
  * omitted) — for local inspection or for a test to verify a round-trip.
- * Returns `[]` if the log doesn't exist yet, rather than throwing.
+ * Returns `[]` if the log doesn't exist yet, rather than throwing. A single
+ * corrupted/partial line (e.g. from a crash mid-`appendFileSync`, or two
+ * writers interleaving without coordination — this log has no equivalent of
+ * xdg-store's collision-safe versioning) is skipped rather than making the
+ * entire log unreadable; this is operational telemetry, not a durability
+ * guarantee.
  */
 export function readTraceSpans(traceId, { path = resolveTraceLogPath() } = {}) {
   if (!existsSync(path)) return [];
   const lines = readFileSync(path, 'utf8').split('\n').filter(Boolean);
-  const spans = lines.map((line) => JSON.parse(line));
+  const spans = [];
+  for (const line of lines) {
+    try {
+      spans.push(JSON.parse(line));
+    } catch {
+      // Skip a corrupted/partial line rather than failing the whole read.
+    }
+  }
   return traceId ? spans.filter((s) => s.traceId === traceId) : spans;
 }

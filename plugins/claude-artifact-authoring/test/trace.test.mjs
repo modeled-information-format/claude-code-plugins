@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { rmSync } from 'node:fs';
+import { rmSync, appendFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
@@ -94,6 +94,29 @@ test('readTraceSpans filters by traceId when multiple traces share one log file'
 
     const all = readTraceSpans(undefined, { path });
     assert.equal(all.length, 3);
+  } finally {
+    rmSync(path, { force: true });
+  }
+});
+
+test('readTraceSpans skips a corrupted/partial line instead of failing the whole read', () => {
+  // A crash mid-appendFileSync, or two writers interleaving without any
+  // coordination (this log has no equivalent of xdg-store's collision-safe
+  // versioning), can leave a partial JSON line in the file. One bad entry
+  // must not make every other span unreadable.
+  const path = tempTraceLog();
+  try {
+    const traceId = newTraceId();
+    writeSpan(endSpan(startSpan({ traceId, name: 'good-1' })), { path });
+    appendFileSync(path, '{"traceId": "' + traceId + '", "spanId": "truncated-mid-wri\n');
+    writeSpan(endSpan(startSpan({ traceId, name: 'good-2' })), { path });
+
+    const spans = readTraceSpans(traceId, { path });
+    assert.equal(spans.length, 2);
+    assert.deepEqual(
+      spans.map((s) => s.name).sort(),
+      ['good-1', 'good-2'],
+    );
   } finally {
     rmSync(path, { force: true });
   }

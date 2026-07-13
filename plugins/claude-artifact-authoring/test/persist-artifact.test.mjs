@@ -143,6 +143,39 @@ test('persistDraftArtifact rejects traceId without parentSpanId before writing a
   }
 });
 
+test('persistDraftArtifact succeeds even when writing the trace span fails (tracing is best-effort)', () => {
+  // The artifact is already durably written by the time the span is
+  // recorded — a tracing failure (here: writeSpan's mkdirSync(dirname)
+  // failing because a path SEGMENT is a plain file, not a directory) must
+  // not make this call throw, or a caller would reasonably treat
+  // persistence itself as failed and retry, producing a duplicate version.
+  const root = tempStoreRoot();
+  const configDir = tempConfigDirWithMifDocs();
+  const blockerFile = join(tmpdir(), `caa-persist-trace-blocker-${randomBytes(8).toString('hex')}`);
+  writeFileSync(blockerFile, 'not a directory');
+  const unwritableTraceLogPath = join(blockerFile, 'traces.jsonl'); // parent segment is a file
+  try {
+    const result = persistDraftArtifact({
+      type: 'goals',
+      slug: 'tracing-failure-is-non-fatal',
+      filename: 'artifact.md',
+      fullMarkdownContent: '---\nid: x\n---\n# content',
+      parsedFrontmatter: VALID_FRONTMATTER,
+      root,
+      env: { CLAUDE_CONFIG_DIR: configDir },
+      traceId: newTraceId(),
+      parentSpanId: newSpanId(),
+      traceLogPath: unwritableTraceLogPath,
+    });
+    assert.equal(result.version, 1);
+    assert.ok(existsSync(result.path), 'the artifact itself must still be written');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+    rmSync(configDir, { recursive: true, force: true });
+    rmSync(blockerFile, { force: true });
+  }
+});
+
 test('persistDraftArtifact rejects an invalid frontmatter before writing anything', () => {
   const root = tempStoreRoot();
   const configDir = tempConfigDirWithMifDocs();
