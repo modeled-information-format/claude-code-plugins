@@ -3,7 +3,7 @@ id: claude-code-plugins-claude-artifact-authoring-readme
 type: semantic
 created: '2026-07-13T00:00:00Z'
 namespace: claude-code-plugins/claude-artifact-authoring
-modified: '2026-07-13T21:20:45.950Z'
+modified: '2026-07-13T21:38:20.565Z'
 temporal:
   '@type': TemporalMetadata
   validFrom: '2026-07-13T00:00:00Z'
@@ -43,10 +43,11 @@ graded, and discoverable across projects rather than one-off files.
 This plugin's design is specified in the architecture doc referenced by
 [Epic #40](https://github.com/modeled-information-format/claude-code-plugins/issues/40),
 which tracks its build via 14 Stories. This README will grow
-generator-by-generator as each Story lands; as of this Story (S3), the plugin
+generator-by-generator as each Story lands; as of this Story (S4), the plugin
 scaffold, the central `XDG_DATA_HOME` artifact store, the cross-cutting
-persistence pipeline, and the OTel-compatible trace substrate exist — no
-generator is implemented yet.
+persistence pipeline, the OTel-compatible trace substrate, and the
+calibrated-grading framework (with real golden sets for all 6 artifact
+types) exist — no generator is implemented yet.
 
 ## Internals
 
@@ -85,11 +86,36 @@ generator is implemented yet.
   four-step sequence (draft via `mif-frontmatter` → write via this module →
   stamp via `mif-provenance` → gate via `mif-validate`, only then promote)
   that every generator Story (S6-S11) runs at the end of its own pipeline.
-- `npm test` (Node's built-in test runner, 56 tests) covers all of the
+- `golden-sets/*.json` — real, hand-authored golden sets (2 good + 2 bad
+  examples each) for all 6 artifact types, grounded directly in the
+  architecture doc's own per-type criteria (structured-prompting checklist,
+  SMART/executable-verify goals, named-pattern loops, grader-typed
+  eval-suites, delegation-safe subagents, Structured-Outputs-safe tool
+  schemas).
+- `lib/golden-set.mjs` — loads and validates a golden set, and computes
+  agreement between a judge's verdicts and the human labels
+  (`computeAgreement`).
+- `lib/calibration.mjs` — records calibration runs (`recordCalibrationRun`)
+  under
+  `${XDG_STATE_HOME:-~/.local/state}/claude-artifact-authoring/calibration-runs.jsonl`,
+  and enforces AD-4's hard gate (`assertCalibrated` throws unless the latest
+  run meets the 75%+ target) plus Task #63's re-calibration cadence
+  (`needsRecalibration`, default 90-day staleness).
+- `skills/grade-artifact/SKILL.md` — documents the LLM-judgment half of
+  grading (the gate check, G-Eval two-stage judging, grade-the-artifact-
+  not-the-path) that pairs with the deterministic modules above. **Real
+  initial calibration performed**: all 6 golden sets were judged by this
+  authoring session against their own stated criteria (not by echoing the
+  labels) and reached 100% agreement — recorded, gate-tested, and
+  explicitly flagged (`aboveTargetRange`) as a same-session calibration
+  that a real independent human spot-audit should strengthen, not hidden as
+  if it were a completed, permanent calibration.
+- `npm test` (Node's built-in test runner, 80 tests) covers all of the
   above, including a **real cross-process** concurrency test for the store
   (separate OS processes, not same-thread async calls, so it actually
-  exercises the `EEXIST`-retry path under real contention) and a real
-  request → artifact → evaluation trace round-trip.
+  exercises the `EEXIST`-retry path under real contention), a real
+  request → artifact → evaluation trace round-trip, and the real initial
+  calibration pass across all 6 golden sets.
 
 ## Install
 

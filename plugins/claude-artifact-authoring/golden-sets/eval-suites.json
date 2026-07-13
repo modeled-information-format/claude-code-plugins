@@ -1,0 +1,30 @@
+{
+  "artifactType": "eval-suites",
+  "criteria": "Names its grader type (code-based, LLM-based, or human, per Anthropic's three documented types), grades the produced artifact rather than the path taken to reach it, requires a golden/reference set with a documented calibration target before unsupervised auto-grading.",
+  "entries": [
+    {
+      "id": "good-code-based-schema-eval",
+      "label": "good",
+      "content": "Grader type: code-based. For each generated tool schema, run `ajv compile` against it and assert zero errors, then validate 3 sample payloads (1 valid, 2 invalid-on-purpose) against the compiled schema and assert the valid one passes while both invalid ones are rejected with a specific error path. Golden set: 10 hand-written schemas (5 valid, 5 with a known specific defect) under golden-sets/tool-schemas.json, reference-checked before this suite ships.",
+      "rationale": "Names its grader type explicitly (code-based) with zero ambiguity about how grading happens. Grades the schema artifact itself (does it compile, does it correctly accept/reject known payloads), not the generation process. References a real golden set with a stated size and composition."
+    },
+    {
+      "id": "good-llm-judge-prompt-eval",
+      "label": "good",
+      "content": "Grader type: LLM-based (G-Eval two-stage). Stage 1: the judge reasons step-by-step about whether the prompt satisfies the structured-prompting checklist (role-setting, examples, delimiting, right altitude), citing specific evidence from the prompt text for each checklist item. Stage 2: only after that reasoning, the judge emits a single pass/fail verdict. Calibration: run against golden-sets/prompts.json (4 hand-labeled examples) before this grader may auto-grade unsupervised; target 75-90% agreement with the human labels, logged per run.",
+      "rationale": "Names its grader type (LLM-based, specifically G-Eval two-stage: reasoning before verdict, matching TruLens's reasoning-before-score ordering). States the calibration precondition explicitly and names the golden set and target range — exactly the AD-4 requirement."
+    },
+    {
+      "id": "bad-vague-quality-check",
+      "label": "bad",
+      "content": "Check if the generated output looks good and makes sense. Flag anything that seems off.",
+      "rationale": "No grader type named at all — is this code, an LLM, or a human? Unanswerable from the text. \"Looks good\", \"makes sense\", and \"seems off\" are not automatable checks. No golden set, no calibration, no reference to what's actually being graded (the artifact vs. how it was produced is never distinguished)."
+    },
+    {
+      "id": "bad-no-calibration-eval",
+      "label": "bad",
+      "content": "Grader type: LLM-based. Have an LLM read the generated goal and rate it 1-10 for quality. Anything above 7 passes.",
+      "rationale": "Names a grader type, which is better than nothing, but has no golden set, no calibration run, and no human-agreement target — this is exactly the un-calibrated auto-grading AD-4 explicitly forbids (\"no LLM-as-judge grader auto-grades unsupervised until calibrated\"). A 1-10 score with an arbitrary threshold (7) is also not grading the artifact against any stated checklist."
+    }
+  ]
+}

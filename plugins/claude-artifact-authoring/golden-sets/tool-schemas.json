@@ -1,0 +1,30 @@
+{
+  "artifactType": "tool-schemas",
+  "criteria": "Real JSON Schema within Structured Outputs' supported subset — no recursive schemas, no numerical min/max constraints, no complex regex — rejected (never silently emitted) if it relies on any of those.",
+  "entries": [
+    {
+      "id": "good-flat-search-tool-schema",
+      "label": "good",
+      "content": "{\n  \"name\": \"search_issues\",\n  \"description\": \"Search GitHub issues by query string, optionally filtered by state.\",\n  \"parameters\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"query\": { \"type\": \"string\", \"description\": \"Search query text\" },\n      \"state\": { \"type\": \"string\", \"enum\": [\"open\", \"closed\", \"all\"] },\n      \"limit\": { \"type\": \"integer\", \"description\": \"Max results to return\" }\n    },\n    \"required\": [\"query\"]\n  }\n}",
+      "rationale": "Flat, non-recursive object schema. No numerical min/max constraints (limit has no bounds — bounding happens in application code, not the schema). No regex patterns. Uses a plain enum for state instead of a pattern. Fully within Structured Outputs' supported subset."
+    },
+    {
+      "id": "good-nested-but-non-recursive-schema",
+      "label": "good",
+      "content": "{\n  \"name\": \"create_release\",\n  \"description\": \"Create a GitHub release with optional assets.\",\n  \"parameters\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"tag\": { \"type\": \"string\" },\n      \"assets\": {\n        \"type\": \"array\",\n        \"items\": {\n          \"type\": \"object\",\n          \"properties\": { \"path\": { \"type\": \"string\" }, \"label\": { \"type\": \"string\" } },\n          \"required\": [\"path\"]\n        }\n      }\n    },\n    \"required\": [\"tag\"]\n  }\n}",
+      "rationale": "Nested (an array of objects) but not recursive — the item schema never references itself or an ancestor. No min/max, no regex. This is the derivation shape AutoGen/Semantic Kernel produce from typed function signatures, within the supported subset."
+    },
+    {
+      "id": "bad-recursive-tree-schema",
+      "label": "bad",
+      "content": "{\n  \"name\": \"build_tree\",\n  \"parameters\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"value\": { \"type\": \"string\" },\n      \"children\": { \"type\": \"array\", \"items\": { \"$ref\": \"#\" } }\n    }\n  }\n}",
+      "rationale": "`children` items reference the schema's own root (`$ref: \"#\"`) — a recursive schema, explicitly unsupported by Structured Outputs' constrained-decoding compiler. This must be rejected outright, not silently emitted as if it would work."
+    },
+    {
+      "id": "bad-min-max-and-regex-schema",
+      "label": "bad",
+      "content": "{\n  \"name\": \"set_priority\",\n  \"parameters\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"level\": { \"type\": \"integer\", \"minimum\": 1, \"maximum\": 5 },\n      \"ticket_id\": { \"type\": \"string\", \"pattern\": \"^[A-Z]{2,4}-\\\\d{1,6}(-[a-z0-9]+)*$\" }\n    },\n    \"required\": [\"level\", \"ticket_id\"]\n  }\n}",
+      "rationale": "`minimum`/`maximum` on `level` are numerical bound constraints, explicitly unsupported. `pattern` on `ticket_id` is a complex regex, also explicitly unsupported. Both must be caught and rejected — bound-checking and format-validation belong in application code after generation, not encoded in the schema itself."
+    }
+  ]
+}
