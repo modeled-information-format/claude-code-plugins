@@ -6,6 +6,7 @@ import { join } from 'node:path';
 
 import { persistDraftArtifact } from '../lib/persist-artifact.mjs';
 import { getCurrentVersion, slugDir } from '../lib/xdg-store.mjs';
+import { newTraceId, newSpanId, readTraceSpans } from '../lib/trace.mjs';
 
 function tempStoreRoot() {
   return mkdtempSync(join(tmpdir(), 'caa-persist-test-store-'));
@@ -66,9 +67,49 @@ test('persistDraftArtifact writes an unpromoted draft version when both precondi
     assert.ok(result.mifDocsDir.includes('mif-docs'));
     // Not promoted: getCurrentVersion must still be null.
     assert.equal(getCurrentVersion('prompts', 'code-review-subagent', root), null);
+    // No traceId was passed — no span should have been recorded.
+    assert.equal(result.spanId, null);
   } finally {
     rmSync(root, { recursive: true, force: true });
     rmSync(configDir, { recursive: true, force: true });
+  }
+});
+
+test('persistDraftArtifact records a persist-draft-artifact span as a child of the caller-supplied request span', () => {
+  const root = tempStoreRoot();
+  const configDir = tempConfigDirWithMifDocs();
+  const traceLogPath = join(mkdtempSync(join(tmpdir(), 'caa-persist-trace-test-')), 'traces.jsonl');
+  try {
+    const traceId = newTraceId();
+    const requestSpanId = newSpanId(); // simulates the generator's own "generation-request" span
+
+    const result = persistDraftArtifact({
+      type: 'goals',
+      slug: 'ship-feature-x',
+      filename: 'artifact.md',
+      fullMarkdownContent: '---\nid: x\n---\n# content',
+      parsedFrontmatter: VALID_FRONTMATTER,
+      root,
+      env: { CLAUDE_CONFIG_DIR: configDir },
+      traceId,
+      parentSpanId: requestSpanId,
+      traceLogPath,
+    });
+
+    assert.ok(result.spanId);
+    const [span] = readTraceSpans(traceId, { path: traceLogPath });
+    assert.equal(span.name, 'persist-draft-artifact');
+    assert.equal(span.spanId, result.spanId);
+    assert.equal(span.parentSpanId, requestSpanId);
+    assert.equal(span.attributes.type, 'goals');
+    assert.equal(span.attributes.slug, 'ship-feature-x');
+    assert.equal(span.attributes.version, result.version);
+    assert.equal(span.attributes.path, result.path);
+    assert.ok(span.endTimeUnixNano, 'span must be closed, not left open');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+    rmSync(configDir, { recursive: true, force: true });
+    rmSync(traceLogPath, { force: true });
   }
 });
 
