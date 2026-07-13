@@ -3,7 +3,7 @@ id: claude-code-plugins-claude-artifact-authoring-readme
 type: semantic
 created: '2026-07-13T00:00:00Z'
 namespace: claude-code-plugins/claude-artifact-authoring
-modified: '2026-07-13T22:09:46.007Z'
+modified: '2026-07-13T22:29:09.449Z'
 temporal:
   '@type': TemporalMetadata
   validFrom: '2026-07-13T00:00:00Z'
@@ -43,11 +43,12 @@ graded, and discoverable across projects rather than one-off files.
 This plugin's design is specified in the architecture doc referenced by
 [Epic #40](https://github.com/modeled-information-format/claude-code-plugins/issues/40),
 which tracks its build via 14 Stories. This README will grow
-generator-by-generator as each Story lands; as of this Story (S4), the plugin
+generator-by-generator as each Story lands; as of this Story (S5), the plugin
 scaffold, the central `XDG_DATA_HOME` artifact store, the cross-cutting
-persistence pipeline, the OTel-compatible trace substrate, and the
+persistence pipeline, the OTel-compatible trace substrate, the
 calibrated-grading framework (with real golden sets for all 6 artifact
-types) exist — no generator is implemented yet.
+types), and central-corpus discovery indexing exist — no generator is
+implemented yet.
 
 ## Internals
 
@@ -83,9 +84,19 @@ types) exist — no generator is implemented yet.
   its own "generation-request" span — records the write as a linked child
   span, so a trace can be walked from request → artifact → (eventually)
   evaluation. `skills/persist-artifact/SKILL.md` documents the full
-  four-step sequence (draft via `mif-frontmatter` → write via this module →
-  stamp via `mif-provenance` → gate via `mif-validate`, only then promote)
-  that every generator Story (S6-S11) runs at the end of its own pipeline.
+  sequence (draft via `mif-frontmatter` → write via this module → stamp via
+  `mif-provenance` → gate via `mif-validate`, only then promote → best-effort
+  index via `mif-corpus`) that every generator Story (S6-S11) runs at the
+  end of its own pipeline.
+- `lib/corpus-index.mjs` — `resolveCorpusDbPath()`, the one deterministic
+  piece of the persistence sequence's discovery-indexing step (Story S5 Task
+  #66): computes
+  `${XDG_DATA_HOME:-~/.local/share}/claude-artifact-authoring/corpus/vectors.db`,
+  the central `--db-path`/`db_path` every generator's `mif-corpus ingest`
+  call targets instead of a project-local `.mif/vectors.db`, so generated
+  artifacts become discoverable via `search_documents`/
+  `find_similar_documents` across every project, not just the one that
+  generated them.
 - `golden-sets/*.json` — real, hand-authored golden sets (2 good + 2 bad
   examples each) for all 6 artifact types, grounded directly in the
   architecture doc's own per-type criteria (structured-prompting checklist,
@@ -112,7 +123,7 @@ types) exist — no generator is implemented yet.
   explicitly flagged (`aboveTargetRange`) as a same-session calibration
   that a real independent human spot-audit should strengthen, not hidden as
   if it were a completed, permanent calibration.
-- `npm test` (Node's built-in test runner, 82 tests) covers all of the
+- `npm test` (Node's built-in test runner, 86 tests) covers all of the
   above, including a **real cross-process** concurrency test for the store
   (separate OS processes, not same-thread async calls, so it actually
   exercises the `EEXIST`-retry path under real contention), a real
