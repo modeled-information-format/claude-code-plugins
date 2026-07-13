@@ -3,7 +3,7 @@ id: claude-code-plugins-claude-artifact-authoring-readme
 type: semantic
 created: '2026-07-13T00:00:00Z'
 namespace: claude-code-plugins/claude-artifact-authoring
-modified: '2026-07-13T20:00:17.668Z'
+modified: '2026-07-13T20:05:14.028Z'
 temporal:
   '@type': TemporalMetadata
   validFrom: '2026-07-13T00:00:00Z'
@@ -40,14 +40,17 @@ authoring checklist, a calibrated eval, and MIF Level-3 provenance persisted to
 a central `XDG_DATA_HOME` artifact store, so generated artifacts are versioned,
 graded, and discoverable across projects rather than one-off files.
 
-This plugin is specified by
-[`claude-artifact-authoring-plugin.ai-architecture-doc.md`](https://github.com/modeled-information-format/claude-code-plugins/issues/40)
-and is being built out via [Epic #40](https://github.com/modeled-information-format/claude-code-plugins/issues/40)
-and its 14 Stories. This README will grow generator-by-generator as each Story
-lands; as of this Story (S0), only the plugin scaffold exists — no generator is
-implemented yet.
+This plugin's design is specified in the architecture doc referenced by
+[Epic #40](https://github.com/modeled-information-format/claude-code-plugins/issues/40),
+which tracks its build via 14 Stories. This README will grow
+generator-by-generator as each Story lands; as of this Story (S0), only the
+plugin scaffold exists — no generator is implemented yet.
 
 ## Install
+
+**Not yet installable** — this plugin isn't registered in
+`.claude-plugin/marketplace.json` yet (that's Story S12, the last Story in
+Epic #40's build order). Once it is:
 
 ```
 /plugin marketplace add modeled-information-format/claude-code-plugins
