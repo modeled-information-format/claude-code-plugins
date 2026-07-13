@@ -118,6 +118,36 @@ test('a relationship entry with the right type but no target fails', () => {
   assert.ok(errors.some((e) => e.includes('relates-to') && e.includes('non-empty target')));
 });
 
+test('a duplicate relationship of the same type is checked regardless of order (not just the first match)', () => {
+  // Order 1: malformed entry first, valid duplicate second — must still pass.
+  const malformedFirst = validFrontmatter();
+  malformedFirst.relationships = [
+    { type: 'relates-to' }, // no target
+    { type: 'relates-to', target: 'urn:mif:activity:claude-code-session:real' },
+    ...malformedFirst.relationships.filter((r) => r.type !== 'relates-to'),
+  ];
+  assert.equal(validateFrontmatterContract(malformedFirst).valid, true);
+
+  // Order 2: valid entry first, malformed duplicate second — must still pass
+  // (the requirement is "at least one valid entry of this type").
+  const validFirst = validFrontmatter();
+  validFirst.relationships = [
+    ...validFirst.relationships.filter((r) => r.type !== 'relates-to'),
+    { type: 'relates-to', target: 'urn:mif:activity:claude-code-session:real' },
+    { type: 'relates-to' },
+  ];
+  assert.equal(validateFrontmatterContract(validFirst).valid, true);
+
+  // Both malformed — must fail.
+  const bothMalformed = validFrontmatter();
+  bothMalformed.relationships = [
+    ...bothMalformed.relationships.filter((r) => r.type !== 'relates-to'),
+    { type: 'relates-to' },
+    { type: 'relates-to', target: '' },
+  ];
+  assert.equal(validateFrontmatterContract(bothMalformed).valid, false);
+});
+
 test('assertFrontmatterContract throws with every error joined', () => {
   assert.throws(
     () => assertFrontmatterContract(validFrontmatter({ citations: [] })),

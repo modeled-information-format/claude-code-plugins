@@ -99,10 +99,14 @@ export function validateFrontmatterContract(frontmatter) {
 
   const relationships = Array.isArray(frontmatter?.relationships) ? frontmatter.relationships : [];
   for (const requiredType of REQUIRED_RELATIONSHIP_TYPES) {
-    const entry = relationships.find((r) => r?.type === requiredType);
-    if (!entry) {
+    // Check every matching entry, not just the first: with duplicate
+    // entries of the same type, .find() alone could report a false failure
+    // (an earlier malformed entry masking a later valid one) or a false
+    // pass (a later malformed duplicate never reached).
+    const matches = relationships.filter((r) => r?.type === requiredType);
+    if (matches.length === 0) {
       errors.push(`relationships[] must include at least one entry with type "${requiredType}".`);
-    } else if (typeof entry.target !== 'string' || entry.target.length === 0) {
+    } else if (!matches.some((r) => typeof r.target === 'string' && r.target.length > 0)) {
       errors.push(`relationships[] entry with type "${requiredType}" must set a non-empty target.`);
     }
   }

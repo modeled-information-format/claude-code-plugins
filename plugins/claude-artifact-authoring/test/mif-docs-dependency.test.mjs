@@ -95,6 +95,43 @@ test('resolveMifDocsDir picks the highest version when several are installed', (
   }
 });
 
+test('resolveMifDocsDir ignores non-version-shaped directory names (no NaN/crash)', () => {
+  const configDir = fakeConfigDir();
+  try {
+    // A stray directory (e.g. ".DS_Store"-like junk) that happens to also
+    // contain the required entry points must never be treated as "the
+    // version" just because it's alphabetically/mtime-last.
+    installFakeMifDocs(configDir, 'not-a-version');
+    const real = installFakeMifDocs(configDir, '0.4.1');
+    assert.equal(resolveMifDocsDir({ CLAUDE_CONFIG_DIR: configDir }), real);
+  } finally {
+    rmSync(configDir, { recursive: true, force: true });
+  }
+});
+
+test('resolveMifDocsDir resolves a base-version tie the SAME way regardless of install order', () => {
+  // "0.4.1" and "0.4.1-<sha>" both being present (same release pinned two
+  // ways) must resolve to the same choice regardless of which directory
+  // readdirSync happens to return first — i.e. independent of install order.
+  const results = [];
+  for (const order of [
+    ['0.4.1', '0.4.1-d12682860df6'],
+    ['0.4.1-d12682860df6', '0.4.1'],
+  ]) {
+    const configDir = fakeConfigDir();
+    try {
+      const dirs = order.map((v) => installFakeMifDocs(configDir, v));
+      const resolved = resolveMifDocsDir({ CLAUDE_CONFIG_DIR: configDir });
+      assert.ok(dirs.includes(resolved));
+      // basename, since the two configDirs are different temp roots.
+      results.push(resolved.split('mif-docs')[1]);
+    } finally {
+      rmSync(configDir, { recursive: true, force: true });
+    }
+  }
+  assert.equal(results[0], results[1], `expected the same tiebreak choice both times, got ${results}`);
+});
+
 test('assertMifDocsAvailable throws an actionable error when not installed', () => {
   const configDir = fakeConfigDir();
   try {

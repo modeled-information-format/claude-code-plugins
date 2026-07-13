@@ -39,10 +39,19 @@ function hasAllRequiredEntryPoints(versionDir) {
   return REQUIRED_ENTRY_POINTS.every((entry) => existsSync(join(versionDir, entry)));
 }
 
+// Only directory names shaped like a real version are ever considered — this
+// guarantees `base()` below never sees a non-numeric segment (no NaN from
+// Number()), rather than patching the comparator to tolerate NaN inputs.
+const VERSION_DIR_NAME = /^\d+\.\d+\.\d+(-[0-9a-f]+)?$/;
+
 // Best-effort version compare: numeric dot-segments win; a trailing
 // "-<sha>" build suffix (e.g. "0.4.3-ade02650fa36") doesn't affect ordering
 // against its own base version — same rule `claude plugin validate`'s own
-// version-sync check treats ref+sha pins under.
+// version-sync check treats ref+sha pins under. When the base versions tie
+// (e.g. "0.4.3" vs. "0.4.3-ade02650fa36", the same release pinned two ways),
+// break the tie on the full string so resolution is deterministic —
+// independent of `readdirSync`'s filesystem-dependent order — rather than
+// returning 0 and leaving it to Array.sort()'s stability.
 function compareVersions(a, b) {
   const base = (v) => v.split('-')[0].split('.').map(Number);
   const [ba, bb] = [base(a), base(b)];
@@ -50,7 +59,7 @@ function compareVersions(a, b) {
     const diff = (ba[i] ?? 0) - (bb[i] ?? 0);
     if (diff !== 0) return diff;
   }
-  return 0;
+  return a < b ? -1 : a > b ? 1 : 0;
 }
 
 /**
@@ -60,8 +69,8 @@ function compareVersions(a, b) {
 export function resolveMifDocsDir(env = process.env) {
   for (const root of pluginCacheRoots(env)) {
     if (!existsSync(root)) continue;
-    const versions = readdirSync(root).filter((name) =>
-      hasAllRequiredEntryPoints(join(root, name)),
+    const versions = readdirSync(root).filter(
+      (name) => VERSION_DIR_NAME.test(name) && hasAllRequiredEntryPoints(join(root, name)),
     );
     if (versions.length === 0) continue;
     versions.sort(compareVersions);
