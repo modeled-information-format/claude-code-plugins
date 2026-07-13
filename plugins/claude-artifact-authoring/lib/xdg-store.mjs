@@ -76,7 +76,17 @@ export function slugDir(type, slug, root = resolveStoreRoot()) {
   return join(typeDir(type, root), slug);
 }
 
+function assertSafeVersion(version) {
+  if (!Number.isInteger(version) || version < 1) {
+    throw new Error(
+      `Invalid version ${JSON.stringify(version)} — must be a positive integer. ` +
+        '(Interpolated into a path segment; anything else risks path traversal.)',
+    );
+  }
+}
+
 function versionDirName(version) {
+  assertSafeVersion(version);
   return `v${version}`;
 }
 
@@ -91,7 +101,10 @@ export function latestVersion(type, slug, root = resolveStoreRoot()) {
   const versions = readdirSync(dir)
     .filter((name) => /^v\d+$/.test(name))
     .map((name) => Number(name.slice(1)));
-  return versions.length ? Math.max(...versions) : 0;
+  // A reduce, not Math.max(...versions): spreading into a function call is
+  // capped by each engine's max-argument-count and can throw once a slug
+  // accumulates enough versions.
+  return versions.reduce((max, v) => (v > max ? v : max), 0);
 }
 
 /**

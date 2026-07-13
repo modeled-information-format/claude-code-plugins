@@ -6,12 +6,15 @@ import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
 import { spawn } from 'node:child_process';
 
+import { mkdirSync } from 'node:fs';
+
 import {
   resolveStoreRoot,
   writeArtifactVersion,
   getCurrentVersion,
   promoteVersion,
   latestVersion,
+  slugDir,
   ARTIFACT_TYPES,
 } from '../lib/xdg-store.mjs';
 
@@ -95,6 +98,37 @@ test('promoteVersion rejects a version that was never written', () => {
   const root = tempHome();
   try {
     assert.throws(() => promoteVersion('tool-schemas', 'never-written', 7, root), /does not exist/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('promoteVersion rejects a non-positive-integer version before it reaches path.join()', () => {
+  const root = tempHome();
+  try {
+    writeArtifactVersion('prompts', 'safe-slug', 'artifact.md', 'ok', { root });
+    for (const bad of ['../../escape', 0, -1, 1.5, 'abc', NaN, Infinity]) {
+      assert.throws(
+        () => promoteVersion('prompts', 'safe-slug', bad, root),
+        /Invalid version/,
+        `expected version ${JSON.stringify(bad)} to be rejected`,
+      );
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('latestVersion scans a large number of version directories without throwing (no Math.max(...spread) argument-count risk)', () => {
+  const root = tempHome();
+  try {
+    const dir = slugDir('prompts', 'many-versions', root);
+    mkdirSync(dir, { recursive: true });
+    const COUNT = 2000;
+    for (let v = 1; v <= COUNT; v += 1) {
+      mkdirSync(join(dir, `v${v}`));
+    }
+    assert.equal(latestVersion('prompts', 'many-versions', root), COUNT);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
