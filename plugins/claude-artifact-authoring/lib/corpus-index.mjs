@@ -6,8 +6,11 @@
 // documented in mif-docs-plugin's skills/mif-corpus/SKILL.md (MCP tool, then
 // CLI fallback, then say so plainly and stop — never simulate a result), so
 // it stays a skill-invocation step in skills/persist-artifact/SKILL.md, the
-// same reason mif-provenance stamping and mif-validate gating aren't plain
-// functions in lib/persist-artifact.mjs either.
+// same reason mif-provenance stamping stays a skill invocation in
+// lib/persist-artifact.mjs (mif-validate gating, by contrast, IS fully
+// deterministic — it stays a skill invocation there only for sequencing,
+// not because it needs judgment or a session ledger the way stamping and
+// this indexing step do).
 //
 // Location: the corpus index is a durable artifact-discovery index over the
 // content in the XDG_DATA_HOME artifact store (lib/xdg-store.mjs), not

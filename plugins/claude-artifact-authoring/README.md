@@ -3,7 +3,7 @@ id: claude-code-plugins-claude-artifact-authoring-readme
 type: semantic
 created: '2026-07-13T00:00:00Z'
 namespace: claude-code-plugins/claude-artifact-authoring
-modified: '2026-07-13T22:24:01.433Z'
+modified: '2026-07-13T22:29:09.449Z'
 temporal:
   '@type': TemporalMetadata
   validFrom: '2026-07-13T00:00:00Z'
@@ -43,11 +43,12 @@ graded, and discoverable across projects rather than one-off files.
 This plugin's design is specified in the architecture doc referenced by
 [Epic #40](https://github.com/modeled-information-format/claude-code-plugins/issues/40),
 which tracks its build via 14 Stories. This README will grow
-generator-by-generator as each Story lands; as of this Story (S4), the plugin
+generator-by-generator as each Story lands; as of this Story (S5), the plugin
 scaffold, the central `XDG_DATA_HOME` artifact store, the cross-cutting
-persistence pipeline, the OTel-compatible trace substrate, and the
+persistence pipeline, the OTel-compatible trace substrate, the
 calibrated-grading framework (with real golden sets for all 6 artifact
-types) exist — no generator is implemented yet.
+types), and central-corpus discovery indexing exist — no generator is
+implemented yet.
 
 ## Internals
 

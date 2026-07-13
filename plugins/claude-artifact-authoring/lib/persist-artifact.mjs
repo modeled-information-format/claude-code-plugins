@@ -4,16 +4,18 @@
 // contract, checking the mif-docs dependency is actually installed, and
 // writing the artifact into the XDG store as an unpromoted draft version.
 //
-// What's NOT here, because it isn't deterministic: drafting the frontmatter
-// itself (mif-frontmatter is an LLM-judgment skill step), running
-// mif-provenance `stamp` / mif-validate, and indexing the promoted artifact
-// into the central corpus via mif-corpus `ingest` (the calling generator
-// skill invokes all three directly — each needs something only a live agent
-// session has: judgment, the session's own hook-observed ledger, or the
-// MCP-tool-vs-CLI-fallback resolution mif-corpus documents). See
-// skills/persist-artifact/SKILL.md for the full sequence this module is one
-// deterministic piece of; lib/corpus-index.mjs is the deterministic path
-// resolution for the indexing step.
+// What's NOT here — the calling generator skill invokes each of these
+// directly, not this module, because each needs something a plain function
+// doesn't have: drafting the frontmatter (mif-frontmatter is an
+// LLM-judgment step), stamping provenance (mif-provenance `stamp` needs the
+// live session's own hook-observed ledger), gating (mif-validate IS fully
+// deterministic and needs neither judgment nor a ledger — it stays a skill
+// invocation only because it must run after stamping and before promotion,
+// not because it's non-deterministic itself), and indexing (mif-corpus
+// `ingest` needs the MCP-tool-vs-CLI-fallback-vs-say-so-and-stop resolution
+// its own SKILL.md documents). See skills/persist-artifact/SKILL.md for the
+// full sequence this module is one deterministic piece of; lib/corpus-
+// index.mjs is the deterministic path resolution for the indexing step.
 
 import { assertFrontmatterContract } from './frontmatter-contract.mjs';
 import { assertMifDocsAvailable } from './mif-docs-dependency.mjs';
