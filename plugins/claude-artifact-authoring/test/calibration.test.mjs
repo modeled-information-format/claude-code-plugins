@@ -75,6 +75,22 @@ test("assertCalibrated's error message reports the actual minAgreement override,
   }
 });
 
+test("assertCalibrated's error message never rounds a below-threshold score up to look like it passed", () => {
+  const path = tempCalibrationLog();
+  try {
+    // 74.9% is below the 75% default target, but toFixed(0) would round the
+    // achieved score up to "75%" and the target down to "75%" too, making
+    // the message read as if the run had actually met the bar.
+    recordCalibrationRun(
+      { artifactType: 'tool-schemas', agreementPct: 0.749, sampleSize: 4, judgeModel: 'claude-sonnet-5' },
+      { path },
+    );
+    assert.throws(() => assertCalibrated('tool-schemas', { path }), /scored 74% agreement \(target >= 75%\)/);
+  } finally {
+    rmSync(path, { force: true });
+  }
+});
+
 test('isCalibrated flags aboveTargetRange without treating it as uncalibrated', () => {
   const path = tempCalibrationLog();
   try {

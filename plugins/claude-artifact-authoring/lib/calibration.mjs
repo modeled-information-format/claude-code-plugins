@@ -104,8 +104,12 @@ export function assertCalibrated(artifactType, { minAgreement = MIN_TARGET_AGREE
     throw new Error(
       run
         ? `Grader for "${artifactType}" is not calibrated: latest run scored ` +
-          `${(run.agreementPct * 100).toFixed(0)}% agreement (target >= ` +
-          `${(minAgreement * 100).toFixed(0)}%). Re-run calibration before auto-grading.`
+          // Floor the achieved percent and ceil the target percent — this is
+          // a "you didn't meet the bar" message, so rounding must never make
+          // a below-threshold run (e.g. 74.9%) display as if it met a 75%
+          // target.
+          `${Math.floor(run.agreementPct * 100)}% agreement (target >= ` +
+          `${Math.ceil(minAgreement * 100)}%). Re-run calibration before auto-grading.`
         : `Grader for "${artifactType}" has never been calibrated. Run calibration against its ` +
           'golden set before auto-grading unsupervised.',
     );
