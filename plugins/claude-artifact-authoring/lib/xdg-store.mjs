@@ -181,11 +181,12 @@ export function claimNextVersionDir(type, slug, root = resolveStoreRoot()) {
 }
 
 /**
- * Write a new artifact version and, unless `promote: false`, atomically
- * promote it to "current". Returns the version number and the path the
- * artifact content was written to (caller writes the actual file(s) there
- * before calling `promote` if `promote: false` was passed, e.g. to run
- * mif-validate against the draft before it becomes current).
+ * Write `content` to `filename` inside a freshly claimed version directory
+ * and, unless `promote: false`, atomically promote that version to
+ * "current". Returns `{ version, path, versionDir }`. If `promote: false`
+ * was passed, the version is written but left un-promoted — the caller
+ * must explicitly call `promoteVersion(type, slug, version, root)` later
+ * (e.g. after running mif-validate against the draft) to make it current.
  */
 export function writeArtifactVersion(type, slug, filename, content, opts = {}) {
   assertSafePathSegment(filename, 'filename');
