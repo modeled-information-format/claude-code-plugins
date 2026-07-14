@@ -3,7 +3,7 @@ id: claude-code-plugins-claude-artifact-authoring-readme
 type: semantic
 created: '2026-07-13T00:00:00Z'
 namespace: claude-code-plugins/claude-artifact-authoring
-modified: '2026-07-13T22:29:09.449Z'
+modified: '2026-07-14T01:21:19.847Z'
 temporal:
   '@type': TemporalMetadata
   validFrom: '2026-07-13T00:00:00Z'
@@ -43,12 +43,12 @@ graded, and discoverable across projects rather than one-off files.
 This plugin's design is specified in the architecture doc referenced by
 [Epic #40](https://github.com/modeled-information-format/claude-code-plugins/issues/40),
 which tracks its build via 14 Stories. This README will grow
-generator-by-generator as each Story lands; as of this Story (S5), the plugin
+generator-by-generator as each Story lands; as of this Story (S6), the plugin
 scaffold, the central `XDG_DATA_HOME` artifact store, the cross-cutting
 persistence pipeline, the OTel-compatible trace substrate, the
 calibrated-grading framework (with real golden sets for all 6 artifact
-types), and central-corpus discovery indexing exist — no generator is
-implemented yet.
+types), central-corpus discovery indexing, and the first generator
+(**prompt**) exist.
 
 ## Internals
 
@@ -123,12 +123,39 @@ implemented yet.
   explicitly flagged (`aboveTargetRange`) as a same-session calibration
   that a real independent human spot-audit should strengthen, not hidden as
   if it were a completed, permanent calibration.
-- `npm test` (Node's built-in test runner, 86 tests) covers all of the
+- `lib/prompt-checklist.mjs` — the deterministic third of the prompt
+  generator's structured-prompting checklist (Story S6 Task #67): a frozen
+  `PROMPT_CHECKLIST` naming all 8 items (clarity/golden rule, contextual
+  justification, few-shot examples, XML delimiting, role-setting, tiered
+  chain-of-thought, right altitude, document grounding) and
+  `scoreDeterministicChecklist(content)`, which mechanically scores exactly
+  the 3 items a plain function can honestly check — `<example>` block count
+  in `[3, 5]`, at least 2 distinct properly-paired XML-style tags beyond
+  `<example>`, and `<thinking>`/`<answer>` tiering consistency (present-and-
+  paired or absent-and-N/A, never one without the other). The remaining 5
+  items need real judgment and are scored by the invoking agent per
+  `skills/generate-prompt/SKILL.md`, never faked as if a regex could grade
+  prose quality.
+- `skills/generate-prompt/SKILL.md` — Story S6's generator: scores the full
+  checklist (deterministic subset via `lib/prompt-checklist.mjs`, judgment
+  items via G-Eval-style reasoning-before-verdict) with a feedback loop back
+  into generation on any failing item, drafts L3 frontmatter recording the
+  checklist scoring in the schema's own `extensions` block, runs
+  `skills/grade-artifact/SKILL.md`'s calibrated-eval sequence, and finishes
+  `skills/persist-artifact/SKILL.md`'s stamp → gate → promote → index
+  sequence — linked end to end by one `traceId` (Story S3). Task #74's
+  worked-example verification (the architecture doc's own code-review
+  subagent example, `golden-sets/prompts.json`'s
+  `good-code-review-subagent` entry) is automated in
+  `test/generate-prompt-pipeline.test.mjs`, not left as prose.
+- `npm test` (Node's built-in test runner) covers all of the
   above, including a **real cross-process** concurrency test for the store
   (separate OS processes, not same-thread async calls, so it actually
   exercises the `EEXIST`-retry path under real contention), a real
-  request → artifact → evaluation trace round-trip, and the real initial
-  calibration pass across all 6 golden sets.
+  request → artifact → evaluation trace round-trip, the real initial
+  calibration pass across all 6 golden sets, and a full
+  `persistDraftArtifact` round-trip for the prompt generator's worked
+  example.
 
 ## Install
 
@@ -151,7 +178,7 @@ Epic #40's build order). Once it is:
 
 | Generator | Story | Status |
 | --- | --- | --- |
-| Prompt | S6 (#59) | Not started |
+| Prompt | S6 (#59) | Done |
 | Goal | S7 (#62) | Not started |
 | Loop | S8 (#64) | Not started |
 | Eval-suite | S9 (#68) | Not started |
