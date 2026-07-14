@@ -117,9 +117,24 @@ test('the worked example passes every deterministic checklist item', () => {
   }
 });
 
-test('Task #90: the worked example provenance record is accepted', () => {
-  assert.doesNotThrow(() =>
-    assertSubagentProvenanceRecorded({ parentSkillOrCommand: 'generate-subagent', dependsOnToolSchemas: [] }),
+test('Task #90: the worked example draft\'s actual provenance record is accepted', () => {
+  // Regression: an earlier version called assertSubagentProvenanceRecorded
+  // with a hardcoded object, so this test would keep passing even if
+  // draftWorkedExampleFrontmatter() stopped including parentSkillOrCommand/
+  // dependsOnToolSchemas — it never actually verified the drafted
+  // frontmatter itself. Now reads the extensions block the worked example
+  // actually drafts.
+  const frontmatter = draftWorkedExampleFrontmatter();
+  const { parentSkillOrCommand, dependsOnToolSchemas } = frontmatter.extensions.claudeArtifactAuthoring;
+  assert.doesNotThrow(() => assertSubagentProvenanceRecorded({ parentSkillOrCommand, dependsOnToolSchemas }));
+});
+
+test('Task #90: dropping the drafted parentSkillOrCommand is actually caught (not vacuously true)', () => {
+  const frontmatter = draftWorkedExampleFrontmatter();
+  const { dependsOnToolSchemas } = frontmatter.extensions.claudeArtifactAuthoring;
+  assert.throws(
+    () => assertSubagentProvenanceRecorded({ parentSkillOrCommand: undefined, dependsOnToolSchemas }),
+    /must name its parentSkillOrCommand/,
   );
 });
 

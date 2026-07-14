@@ -89,6 +89,23 @@ test('hasFrontmatterFields requires name, description, AND tools all present', (
   assert.equal(scoreDeterministicChecklist('no frontmatter at all').hasFrontmatterFields, false);
 });
 
+test('hasFrontmatterFields recognizes a CRLF-line-ended frontmatter block', () => {
+  // Regression: an earlier version's frontmatter regex only matched bare
+  // \n, so a CRLF-authored file (e.g. edited on Windows) would never match
+  // the frontmatter block at all.
+  const crlf = '---\r\nname: x\r\ndescription: y\r\ntools: Read\r\n---\r\nbody';
+  assert.equal(scoreDeterministicChecklist(crlf).hasFrontmatterFields, true);
+});
+
+test('the closing frontmatter delimiter must actually end its own line, not just appear as a substring', () => {
+  // Regression: an earlier version matched the first literal "\n---"
+  // regardless of what followed it on the same line, so a description
+  // containing "---" followed directly by more text (no line break) could
+  // be mistaken for the real closing fence.
+  const notARealFence = '---\nname: x\ndescription: something ---abc more text\ntools: Read\n---\n';
+  assert.equal(scoreDeterministicChecklist(notARealFence).hasFrontmatterFields, true);
+});
+
 test('extractDescriptionValue pulls the single-line description field out of the frontmatter block', () => {
   assert.equal(
     extractDescriptionValue('---\nname: x\ndescription: Reviews things. Use when asked.\ntools: Read\n---\nbody'),

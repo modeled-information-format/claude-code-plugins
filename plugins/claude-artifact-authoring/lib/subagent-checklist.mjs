@@ -57,8 +57,14 @@ export const DETERMINISTIC_CHECKLIST_KEYS = Object.freeze(
 
 // Matches the frontmatter block: a leading "---" line, its content, and
 // the closing "---" line — the same shape every subagent/skill/command
-// definition in this org uses.
-const FRONTMATTER_BLOCK = /^---\n([\s\S]*?)\n---/;
+// definition in this org uses. `\r?\n` (not a bare `\n`) so a CRLF-line-
+// ended file (e.g. authored/edited on Windows) is still recognized. The
+// closing delimiter requires `(?=\r?\n|$)` immediately after it — without
+// this, a description line containing a literal "---" followed directly
+// by more text on the same line (no line break) could satisfy the closing
+// pattern early; requiring the delimiter to actually END the line (or the
+// string) makes it a real fence, not just any three-dash substring.
+const FRONTMATTER_BLOCK = /^---\r?\n([\s\S]*?)\r?\n---(?=\r?\n|$)/;
 
 function extractFrontmatterBlock(text) {
   const match = FRONTMATTER_BLOCK.exec(text);
