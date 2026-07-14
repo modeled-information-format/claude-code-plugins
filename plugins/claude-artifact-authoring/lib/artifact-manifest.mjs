@@ -31,11 +31,13 @@ const DISCLAIMER =
 /**
  * Assemble a C2PA-style manifest for an artifact that has already been
  * drafted with L3 frontmatter (Story S2's persistence pipeline) — every
- * generator Story S6-S11 already writes `citations[]` (source grounding)
- * and `extensions.claudeArtifactAuthoring` (checklist scores, generator-
- * specific fields, revision) into that frontmatter; this reads those
- * EXISTING declarations rather than requiring a second, separately-
- * maintained data source.
+ * generator Story S6-S11 already writes `citations[]` (source grounding),
+ * `relationships[]` (motivation, via `derived-from` entries), and
+ * `extensions.claudeArtifactAuthoring` (checklist scores plus whatever
+ * generator-specific fields that artifact type declares, copied through
+ * verbatim rather than a fixed allow-list) into that frontmatter; this
+ * reads those EXISTING declarations rather than requiring a second,
+ * separately-maintained data source.
  *
  * @param {object} args
  * @param {string} args.type - the artifact type (e.g. 'prompts', 'goals').
@@ -57,19 +59,20 @@ export function buildArtifactManifest({ type, slug, version, frontmatter }) {
     manifestVersion: MANIFEST_VERSION,
     artifact: { type, slug, version },
     declaredAt: frontmatter.temporal?.recordedAt ?? null,
-    motivation: relationships.filter((r) => r?.type === 'derived-from').map((r) => r.target ?? null),
+    motivation: relationships
+      .filter((r) => r?.type === 'derived-from' && typeof r.target === 'string' && r.target.length > 0)
+      .map((r) => r.target),
     sourceGrounding: citations.map((citation) => ({
       title: citation?.title ?? null,
       url: citation?.url ?? null,
       citationRole: citation?.citationRole ?? null,
     })),
-    generationSteps: generatorExtensions
-      ? {
-          generatorType: generatorExtensions.generatorType ?? null,
-          checklist: generatorExtensions.checklist ?? null,
-          revision: generatorExtensions.revision ?? null,
-        }
-      : null,
+    // Spread every field the generator itself declared here — not a fixed
+    // allow-list — since each artifact type's extensions carry different
+    // generator-specific fields (e.g. tool-schemas' derivationStrategy/
+    // outputLogic, subagents' parentSkillOrCommand/dependsOnToolSchemas)
+    // that a hardcoded subset would silently drop from the manifest.
+    generationSteps: generatorExtensions ? { ...generatorExtensions } : null,
     disclaimer: DISCLAIMER,
   };
 }
@@ -136,6 +139,29 @@ export function assertManifestReadyToSurface(manifest) {
   if (missing.length > 0) {
     throw new Error(
       `Manifest is missing required field(s): ${missing.join(', ')} — an incomplete manifest must not be surfaced as if it were complete.`,
+    );
+  }
+
+  // Beyond presence, check the minimal shape formatManifestForInspection()
+  // actually relies on — a present-but-malformed field would otherwise
+  // pass this "structural completeness" check and then crash during
+  // rendering, defeating the point of checking readiness before surfacing.
+  const shapeErrors = [];
+  if (!manifest.artifact || typeof manifest.artifact.type !== 'string' || typeof manifest.artifact.slug !== 'string') {
+    shapeErrors.push('artifact must be an object with string "type" and "slug"');
+  }
+  if (!Array.isArray(manifest.motivation)) {
+    shapeErrors.push('motivation must be an array');
+  }
+  if (!Array.isArray(manifest.sourceGrounding)) {
+    shapeErrors.push('sourceGrounding must be an array');
+  }
+  if (typeof manifest.disclaimer !== 'string' || manifest.disclaimer.length === 0) {
+    shapeErrors.push('disclaimer must be a non-empty string');
+  }
+  if (shapeErrors.length > 0) {
+    throw new Error(
+      `Manifest has malformed field(s): ${shapeErrors.join('; ')} — a malformed manifest must not be surfaced as if it were complete.`,
     );
   }
 }

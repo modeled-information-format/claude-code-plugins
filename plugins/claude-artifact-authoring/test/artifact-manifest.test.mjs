@@ -84,6 +84,33 @@ test('buildArtifactManifest assembles source grounding and generation steps from
   assert.equal(manifest.generationSteps.revision, 1);
 });
 
+test('buildArtifactManifest preserves generator-specific extensions fields (not just a fixed allow-list)', () => {
+  const manifest = buildArtifactManifest({
+    type: 'tool-schemas',
+    slug: 'search-issues-worked-example',
+    version: 1,
+    frontmatter: workedExampleFrontmatter(),
+  });
+  // tool-schemas' own fields, distinct from the generatorType/checklist/revision
+  // fields every generator shares — these must not be silently dropped.
+  assert.equal(manifest.generationSteps.derivationStrategy, 'annotated-method-derived');
+  assert.equal(manifest.generationSteps.outputLogic, 'constrained-decoding');
+});
+
+test('buildArtifactManifest preserves a DIFFERENT generator type\'s own extensions fields too, not tool-schemas-specific ones', () => {
+  const frontmatter = workedExampleFrontmatter();
+  frontmatter.extensions.claudeArtifactAuthoring = {
+    generatorType: 'subagents',
+    checklist: { hasFrontmatterFields: 'pass' },
+    parentSkillOrCommand: 'code-reviewer',
+    dependsOnToolSchemas: [],
+    revision: 1,
+  };
+  const manifest = buildArtifactManifest({ type: 'subagents', slug: 'bare', version: 1, frontmatter });
+  assert.equal(manifest.generationSteps.parentSkillOrCommand, 'code-reviewer');
+  assert.deepEqual(manifest.generationSteps.dependsOnToolSchemas, []);
+});
+
 test('buildArtifactManifest always includes a disclaimer, on every manifest it builds', () => {
   const manifest = buildArtifactManifest({
     type: 'tool-schemas',
@@ -111,6 +138,18 @@ test('buildArtifactManifest only counts relationships of type "derived-from" as 
   assert.deepEqual(manifest.motivation, [
     'https://github.com/modeled-information-format/claude-code-plugins/issues/40',
   ]);
+});
+
+test('buildArtifactManifest excludes a derived-from relationship with a missing/non-string target, rather than rendering a misleading blank motivation', () => {
+  const frontmatter = workedExampleFrontmatter();
+  frontmatter.relationships.push({ type: 'derived-from' }); // no target at all
+  frontmatter.relationships.push({ type: 'derived-from', target: '' }); // empty target
+  frontmatter.relationships.push({ type: 'derived-from', target: 42 }); // non-string target
+  const manifest = buildArtifactManifest({ type: 'tool-schemas', slug: 'bare', version: 1, frontmatter });
+  assert.deepEqual(manifest.motivation, [
+    'https://github.com/modeled-information-format/claude-code-plugins/issues/40',
+  ]);
+  assert.ok(!manifest.motivation.includes(null));
 });
 
 test('buildArtifactManifest tolerates a malformed (non-object) citation entry rather than crashing', () => {
@@ -181,4 +220,33 @@ test('assertManifestReadyToSurface rejects a manifest missing a required field, 
   });
   delete manifest.disclaimer;
   assert.throws(() => assertManifestReadyToSurface(manifest), /missing required field\(s\): disclaimer/);
+});
+
+test('assertManifestReadyToSurface rejects a manifest whose fields are PRESENT but malformed, not just checking presence', () => {
+  const manifest = buildArtifactManifest({
+    type: 'tool-schemas',
+    slug: 'search-issues-worked-example',
+    version: 1,
+    frontmatter: workedExampleFrontmatter(),
+  });
+
+  const notAnArray = { ...manifest, motivation: 'not-an-array' };
+  assert.throws(() => assertManifestReadyToSurface(notAnArray), /motivation must be an array/);
+
+  const emptyDisclaimer = { ...manifest, disclaimer: '' };
+  assert.throws(() => assertManifestReadyToSurface(emptyDisclaimer), /disclaimer must be a non-empty string/);
+
+  const badArtifact = { ...manifest, artifact: { type: 'tool-schemas' } };
+  assert.throws(() => assertManifestReadyToSurface(badArtifact), /artifact must be an object with string/);
+});
+
+test('a manifest that passes assertManifestReadyToSurface never crashes formatManifestForInspection', () => {
+  const manifest = buildArtifactManifest({
+    type: 'tool-schemas',
+    slug: 'search-issues-worked-example',
+    version: 1,
+    frontmatter: workedExampleFrontmatter(),
+  });
+  assert.doesNotThrow(() => assertManifestReadyToSurface(manifest));
+  assert.doesNotThrow(() => formatManifestForInspection(manifest));
 });
