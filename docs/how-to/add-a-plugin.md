@@ -4,6 +4,15 @@ type: procedural
 created: '2026-06-29T18:50:34-04:00'
 title: Add a plugin to the catalog
 diataxis_type: how-to
+provenance:
+  '@type': Provenance
+  agent: claude-code/claude-sonnet-5
+  wasGeneratedBy:
+    '@id': urn:mif:activity:claude-code-session:3921fa8c-0b9e-410e-b53c-6cf81b074757
+    '@type': prov:Activity
+  trustLevel: user_stated
+  agentVersion: 2.1.208
+modified: '2026-07-14T05:17:55.543Z'
 ---
 # Add a plugin to the catalog
 
@@ -65,9 +74,14 @@ a human-readable label.
 }
 ```
 
-> The vendored `attested-reference` plugin lives **inside** this repo, so its
-> entry uses a local `"source": "./plugins/attested-reference"` path rather than
-> `git-subdir`. External plugins use the `git-subdir` + `sha` form above.
+> The vendored `claude-artifact-authoring` plugin lives **inside** this repo, so
+> its entry uses a local `"source": "./plugins/claude-artifact-authoring"` path
+> (just the path string, no `git-subdir`/`ref`/`sha` — a local source isn't
+> pinned, since there's no separate repo to pin) rather than the `git-subdir`
+> form. External plugins use the `git-subdir` + `sha` form above; a vendored
+> plugin doesn't need a source pin at all since it's version-controlled
+> alongside this file. See [Registered plugins](/claude-code-plugins/reference/registered-plugins/)
+> for its full catalog entry.
 
 ## 3. Open a PR — catalog admission runs fail-closed
 
