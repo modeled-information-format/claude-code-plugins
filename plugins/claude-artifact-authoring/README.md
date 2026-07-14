@@ -3,7 +3,7 @@ id: claude-code-plugins-claude-artifact-authoring-readme
 type: semantic
 created: '2026-07-13T00:00:00Z'
 namespace: claude-code-plugins/claude-artifact-authoring
-modified: '2026-07-14T04:26:12.986Z'
+modified: '2026-07-14T05:06:19.544Z'
 temporal:
   '@type': TemporalMetadata
   validFrom: '2026-07-13T00:00:00Z'
@@ -43,13 +43,14 @@ graded, and discoverable across projects rather than one-off files.
 This plugin's design is specified in the architecture doc referenced by
 [Epic #40](https://github.com/modeled-information-format/claude-code-plugins/issues/40),
 which tracks its build via 14 Stories. This README will grow
-generator-by-generator as each Story lands; as of this Story (S11), the
+generator-by-generator as each Story lands; as of this Story (S13), the
 plugin scaffold, the central `XDG_DATA_HOME` artifact store, the
 cross-cutting persistence pipeline, the OTel-compatible trace substrate,
 the calibrated-grading framework (with real golden sets for all 6 artifact
-types), central-corpus discovery indexing, and all six generators
+types), central-corpus discovery indexing, all six generators
 (**prompt**, **goal**, **loop**, **eval-suite**, **subagent-definition**,
-**tool-schema**)
+**tool-schema**), and a cross-cutting best-effort provenance manifest
+surfaced for inspection on every artifact leaving the authoring session
 exist.
 
 ## Internals
@@ -312,12 +313,33 @@ exist.
   `conceptType: 'procedural'` (via `ARTIFACT_TYPE_METADATA['tool-schemas']`),
   and finishes the same grade → persist sequence Stories S6-S10
   established — plus the pin-resolution step other generators depend on.
+- `lib/artifact-manifest.mjs` — Story S13's cross-cutting SHOULD-level
+  "signed manifest" (Task #97's design, AD-6): `buildArtifactManifest`
+  reassembles a C2PA-style manifest from fields a generator's own
+  frontmatter ALREADY declared (motivation from the `derived-from`
+  entries in `relationships[]`, source grounding from `citations[]`,
+  generation steps from `extensions.claudeArtifactAuthoring`, when they
+  were declared from `temporal.recordedAt`) — it does not independently
+  verify, sign, or attest to any of it, and every manifest it builds
+  carries its own `disclaimer` field saying so explicitly.
+  `formatManifestForInspection` renders one as human-readable text (Task
+  #99's "surface it for inspection" requirement) and
+  `assertManifestReadyToSurface` is a **structural** completeness check
+  only — passing it means a manifest with the required fields exists to
+  show, never that the artifact's declarations are true. Wired into
+  `skills/persist-artifact/SKILL.md` as its final step, run once per
+  artifact right after promotion, so every artifact leaving the authoring
+  session gets one — the Security NFR (Task #101) this satisfies:
+  artifacts are **untrusted until a human or downstream system inspects
+  this manifest and the artifact's own content directly**.
 
 ## Install
 
 **Not yet installable** — this plugin isn't registered in
-`.claude-plugin/marketplace.json` yet (that's Story S12, the last Story in
-Epic #40's build order). Once it is:
+`.claude-plugin/marketplace.json` yet (that's Story S12 — despite its number,
+it's built LAST in Epic #40's build order, after every generator and
+cross-cutting Story including S13, since marketplace admission is the final
+step once everything else is done). Once it is:
 
 ```
 /plugin marketplace add modeled-information-format/claude-code-plugins
@@ -340,3 +362,4 @@ Epic #40's build order). Once it is:
 | Eval-suite | S9 (#68) | Done |
 | Subagent-definition | S10 (#73) | Done |
 | Tool-schema | S11 (#77) | Done |
+| Provenance manifest (cross-cutting) | S13 (#86) | Done |

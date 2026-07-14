@@ -80,7 +80,27 @@ origin findings vary per artifact family — the sequence itself does not.
    then say so plainly and stop) and its documented `description:`-key ADR
    exclusion; note the failure to the user rather than silently skipping it.
 
-## Why steps 2 and 4's promote are scripted, and 1/3/5 are skill invocations
+6. **Surface the manifest for inspection — `lib/artifact-manifest.mjs`
+   (Story S13, AD-6's SHOULD-level "signed manifest").** Only after step 4
+   promotes the version, call `buildArtifactManifest({type, slug, version,
+   frontmatter})` with the now-promoted artifact's `type`/`slug`/`version`
+   and its stamped frontmatter object (from step 3), then
+   `assertManifestReadyToSurface(manifest)` to confirm it has the shape
+   this step requires, then print `formatManifestForInspection(manifest)`
+   to the user before ending the generator's run. This is a **structural
+   completeness check, not a trust or verification gate**: it confirms a
+   manifest recording what the pipeline declared about itself (motivation,
+   source grounding, generation steps, when they were declared) exists and
+   is shown — it proves nothing about whether those declarations are true.
+   Every manifest carries its own `disclaimer` field stating this
+   explicitly; treat every artifact leaving this authoring session as
+   **untrusted until a human or downstream system inspects this manifest
+   and the artifact's own content directly** (the Security NFR this Story
+   satisfies). This step runs regardless of whether step 5's best-effort
+   corpus indexing succeeds — the manifest only depends on step 4's
+   promoted, conformant version, not on discoverability.
+
+## Why steps 2, 4, and 6 are scripted, and 1/3/5 are skill invocations
 
 `lib/persist-artifact.mjs` and `lib/xdg-store.mjs`'s `promoteVersion` only do
 what's genuinely deterministic: contract validation, dependency resolution,
@@ -92,4 +112,7 @@ fallback-vs-say-so-and-stop resolution for the third — so those three steps
 stay as direct skill invocations by whichever generator skill is running
 this sequence, not calls into `lib/`. `lib/corpus-index.mjs`'s
 `resolveCorpusDbPath()` is the one deterministic piece of step 5: computing
-*where* the central index lives, not performing the ingest itself.
+*where* the central index lives, not performing the ingest itself. Step 6's
+`lib/artifact-manifest.mjs` is, like steps 2 and 4, fully deterministic —
+it only reassembles fields the earlier steps already wrote into
+frontmatter, so it belongs in `lib/`, not as its own skill invocation.
