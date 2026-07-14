@@ -122,9 +122,10 @@ function pairedTagNames(content) {
  * merging both into one explicit pass/fail record, per Task #69's
  * "record each checklist item as an explicit pass or fail."
  *
- * @param {string} content - the drafted prompt's full text (body only, or
+ * @param {string} [content] - the drafted prompt's full text (body only, or
  *   full markdown — this function only looks at literal tag text, so
- *   frontmatter noise above it doesn't affect the result).
+ *   frontmatter noise above it doesn't affect the result). Non-string
+ *   input is treated as an empty string rather than throwing.
  */
 // Tags that have their own dedicated checklist item and must never count
 // toward xmlDelimiting's "distinct content-sectioning tags" tally — without

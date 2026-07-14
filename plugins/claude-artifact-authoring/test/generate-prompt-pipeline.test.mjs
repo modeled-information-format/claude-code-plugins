@@ -119,6 +119,7 @@ test('the worked example (good-code-review-subagent) exists in the golden set', 
 });
 
 test('the worked example passes every deterministic checklist item', () => {
+  assert.ok(WORKED_EXAMPLE, 'golden-sets/prompts.json must carry the "good-code-review-subagent" entry');
   const scores = scoreDeterministicChecklist(WORKED_EXAMPLE.content);
   for (const key of DETERMINISTIC_CHECKLIST_KEYS) {
     assert.equal(scores[key], true, `expected the worked example to pass "${key}", got ${JSON.stringify(scores)}`);
@@ -133,8 +134,12 @@ test('Task #74: drafted frontmatter for the worked example satisfies the four-re
 });
 
 test('the worked example frontmatter uses the prompts ttl from ARTIFACT_TYPE_METADATA, not a hardcoded literal', () => {
+  // Asserting only against ARTIFACT_TYPE_METADATA (not also a hardcoded
+  // 'P90D') is the point of this test: it must keep passing if that
+  // metadata's ttl value ever legitimately changes, since what's actually
+  // being proven is that draftWorkedExampleFrontmatter() derives the value
+  // rather than hardcoding its own copy.
   const frontmatter = draftWorkedExampleFrontmatter();
-  assert.equal(frontmatter.temporal.ttl, 'P90D');
   assert.equal(frontmatter.temporal.ttl, ARTIFACT_TYPE_METADATA.prompts.ttl);
 });
 
@@ -147,6 +152,7 @@ test('a checklist item failing the contract is actually caught (contract is not 
 });
 
 test('full persistDraftArtifact round-trip for the worked example, promoted after a passing gate simulation', () => {
+  assert.ok(WORKED_EXAMPLE, 'golden-sets/prompts.json must carry the "good-code-review-subagent" entry');
   const root = tempStoreRoot();
   const configDir = tempConfigDirWithMifDocs();
   try {
@@ -187,6 +193,7 @@ test('full persistDraftArtifact round-trip for the worked example, promoted afte
 });
 
 test('persistDraftArtifact rejects the worked example when a required element is dropped, even with a well-formed extensions block present', () => {
+  assert.ok(WORKED_EXAMPLE, 'golden-sets/prompts.json must carry the "good-code-review-subagent" entry');
   // extensions is additive and never validated by the contract itself
   // (mif's schema treats it as open provider-specific data) — this proves
   // that dropping a REQUIRED element still fails even with a fully-formed
