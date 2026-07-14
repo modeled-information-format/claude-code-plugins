@@ -12,7 +12,7 @@ provenance:
     '@type': prov:Activity
   trustLevel: user_stated
   agentVersion: 2.1.208
-modified: '2026-07-14T05:24:40.577Z'
+modified: '2026-07-14T10:49:29.847Z'
 ---
 # Verify a release
 
@@ -36,7 +36,7 @@ Set the variables once. **Substitute the real tarball filename** for the plugin
 you downloaded.
 
 ```bash
-TARBALL="artifact-authoring-0.2.0.tar.gz"   # the downloaded plugin tarball
+TARBALL="claude-code-plugins-0.3.1.tar.gz"   # the downloaded release tarball
 REPO="modeled-information-format/claude-code-plugins"
 SEAM="modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml"
 ```
