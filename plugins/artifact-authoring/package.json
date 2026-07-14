@@ -1,0 +1,12 @@
+{
+  "name": "artifact-authoring-internal",
+  "private": true,
+  "type": "module",
+  "description": "Internal lib/ modules for the artifact-authoring plugin — not published, no runtime deps.",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
