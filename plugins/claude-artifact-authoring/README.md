@@ -3,7 +3,7 @@ id: claude-code-plugins-claude-artifact-authoring-readme
 type: semantic
 created: '2026-07-13T00:00:00Z'
 namespace: claude-code-plugins/claude-artifact-authoring
-modified: '2026-07-14T03:54:17.393Z'
+modified: '2026-07-14T04:26:12.986Z'
 temporal:
   '@type': TemporalMetadata
   validFrom: '2026-07-13T00:00:00Z'
@@ -43,12 +43,13 @@ graded, and discoverable across projects rather than one-off files.
 This plugin's design is specified in the architecture doc referenced by
 [Epic #40](https://github.com/modeled-information-format/claude-code-plugins/issues/40),
 which tracks its build via 14 Stories. This README will grow
-generator-by-generator as each Story lands; as of this Story (S10), the
+generator-by-generator as each Story lands; as of this Story (S11), the
 plugin scaffold, the central `XDG_DATA_HOME` artifact store, the
 cross-cutting persistence pipeline, the OTel-compatible trace substrate,
 the calibrated-grading framework (with real golden sets for all 6 artifact
-types), central-corpus discovery indexing, and the first five generators
-(**prompt**, **goal**, **loop**, **eval-suite**, **subagent-definition**)
+types), central-corpus discovery indexing, and all six generators
+(**prompt**, **goal**, **loop**, **eval-suite**, **subagent-definition**,
+**tool-schema**)
 exist.
 
 ## Internals
@@ -273,10 +274,44 @@ exist.
   likewise real, **real calibration-log exercises** (no run recorded, a
   below-target run, a stale run, and a genuinely passing fresh run)
   proving the eval-suite generator's calibration-cadence wiring checks an
-  actual recorded run, and **real delegation-scoring exercises** (a
+  actual recorded run, **real delegation-scoring exercises** (a
   perfect decision function, and a genuinely broken "always delegate" one
   caught by the harness) proving the subagent generator's delegation eval
-  is a real scored execution, not a documented assumption.
+  is a real scored execution, and **real schema-tree walks and store
+  round-trips** (recursive-$ref detection across a root reference and a
+  genuine ancestor-path reference, numerical-bound/regex-keyword detection
+  nested arbitrarily deep, and a pin resolution that fails before a schema
+  is promoted and succeeds against its real current version afterward)
+  proving the tool-schema generator's checklist and pin mechanism are not
+  documented assumptions either.
+- `lib/tool-schema-checklist.mjs` — the deterministic subset of the
+  tool-schema generator's authoring checklist (Story S11 Task #89), with a
+  HIGHER deterministic ratio (4 of 5 items) than the other five generators
+  — this artifact type's own criteria (recursion, numerical bounds, regex)
+  is genuinely mechanical, unlike the others' prose judgment. A frozen
+  `TOOL_SCHEMA_CHECKLIST`, `scoreDeterministicChecklist(content)` (parses
+  the schema JSON and walks it for `isValidJSON`, `noRecursiveSchema` via
+  `hasRecursiveSchema` — a real structural walk tracking JSON-Pointer
+  ancestor paths, not a literal `"$ref": "#"` string search —
+  `noNumericalBoundConstraints`, `noComplexRegex`), and
+  `assertDerivationChoiceRecorded` (Task #89: an explicit derivation
+  strategy from the three prior-art strategies AutoGen/Semantic
+  Kernel/CrewAI use, and an explicit Instructor-vs-Outlines output-logic
+  fork — never left implicit).
+- `lib/tool-schema-pin.mjs` — Task #91's "single source of typed truth"
+  made real: `resolveToolSchemaPin` resolves a dependent artifact's pin
+  (e.g. a subagent's `dependsOnToolSchemas[]`, Story S10) against
+  `lib/xdg-store.mjs`'s EXISTING `current.json` pointer, rather than a
+  second, separately-tracked version number — and throws if the schema has
+  no promoted version yet, so nothing can pin against an ungated draft.
+- `skills/generate-tool-schema/SKILL.md` — Story S11's generator: picks a
+  derivation strategy and an output-logic fork explicitly, authors real
+  JSON Schema within the Structured Outputs supported subset, runs a
+  schema-conformance round-trip proving a real model call never falls back
+  to an unstructured response (Task #93), drafts L3 frontmatter with
+  `conceptType: 'procedural'` (via `ARTIFACT_TYPE_METADATA['tool-schemas']`),
+  and finishes the same grade → persist sequence Stories S6-S10
+  established — plus the pin-resolution step other generators depend on.
 
 ## Install
 
@@ -304,4 +339,4 @@ Epic #40's build order). Once it is:
 | Loop | S8 (#64) | Done |
 | Eval-suite | S9 (#68) | Done |
 | Subagent-definition | S10 (#73) | Done |
-| Tool-schema | S11 (#77) | Not started |
+| Tool-schema | S11 (#77) | Done |
