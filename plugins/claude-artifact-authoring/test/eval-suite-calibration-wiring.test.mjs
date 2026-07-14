@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 
 import { assertEvalSuiteCalibrationWired } from '../lib/eval-suite-calibration-wiring.mjs';
 import { recordCalibrationRun } from '../lib/calibration.mjs';
@@ -15,6 +15,14 @@ import { recordCalibrationRun } from '../lib/calibration.mjs';
 function tempCalibrationLogPath() {
   const dir = mkdtempSync(join(tmpdir(), 'caa-eval-suite-calibration-test-'));
   return join(dir, 'calibration-runs.jsonl');
+}
+
+// mkdtempSync creates a directory, not the log file itself — removing only
+// the file path (as an earlier version did) leaves the mkdtemp-created
+// directory behind on disk after every test run. Clean up the whole
+// directory, not just the file inside it.
+function cleanupCalibrationLog(path) {
+  rmSync(dirname(path), { recursive: true, force: true });
 }
 
 test('code-based and human graders are exempt from calibration wiring entirely', () => {
@@ -59,7 +67,7 @@ test('an llm-based grader with no recorded calibration run for its target is rej
       /has never been calibrated/,
     );
   } finally {
-    rmSync(path, { force: true });
+    cleanupCalibrationLog(path);
   }
 });
 
@@ -80,7 +88,7 @@ test('an llm-based grader with a real, passing, fresh calibration run is accepte
       assertEvalSuiteCalibrationWired({ graderType: 'llm-based', targetArtifactType: 'prompts' }, { path }),
     );
   } finally {
-    rmSync(path, { force: true });
+    cleanupCalibrationLog(path);
   }
 });
 
@@ -108,7 +116,7 @@ test('an llm-based grader whose recorded calibration scored below target is reje
       /latest run scored 50% agreement/,
     );
   } finally {
-    rmSync(path, { force: true });
+    cleanupCalibrationLog(path);
   }
 });
 
@@ -132,6 +140,6 @@ test('an llm-based grader whose calibration is stale (Task #81 cadence) is rejec
       /calibration is.*stale/,
     );
   } finally {
-    rmSync(path, { force: true });
+    cleanupCalibrationLog(path);
   }
 });

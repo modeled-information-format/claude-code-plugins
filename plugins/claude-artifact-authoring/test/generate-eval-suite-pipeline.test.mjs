@@ -11,7 +11,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 
 import { scoreDeterministicChecklist, DETERMINISTIC_CHECKLIST_KEYS } from '../lib/eval-suite-checklist.mjs';
 import { assertEvalSuiteCalibrationWired } from '../lib/eval-suite-calibration-wiring.mjs';
@@ -141,7 +141,10 @@ test('Task #79/#81: the worked example calibration wiring is rejected with no ru
       assertEvalSuiteCalibrationWired({ graderType: 'llm-based', targetArtifactType: 'prompts' }, { path }),
     );
   } finally {
-    rmSync(path, { force: true });
+    // mkdtempSync (in tempCalibrationLogPath) creates a directory, not the
+    // log file itself — removing only the file path leaves that directory
+    // behind on disk after the test run.
+    rmSync(dirname(path), { recursive: true, force: true });
   }
 });
 
