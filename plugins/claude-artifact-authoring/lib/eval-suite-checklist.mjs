@@ -68,22 +68,28 @@ export function extractGraderType(content) {
 
 // A simple substring presence check, not a structured header parse like
 // goal/loop's "Constraints:"/"Stop condition:" — this suite's prose names a
-// concrete golden set by mentioning "golden set" or a "golden-sets/" path,
-// and that mention alone (regardless of surrounding punctuation/newlines)
-// is the deterministic signal Task #76 asks for.
+// concrete golden set by mentioning "golden set" or a "golden-sets/" path.
+// A bare mention alone is not enough, though: "this suite does NOT use a
+// golden set" also contains the phrase — the exact same false-positive
+// class Copilot caught on lib/goal-checklist.mjs's "Constraints: none"
+// (a mention-presence check with no negation awareness). A negation word
+// shortly BEFORE the mention (e.g. "no", "not", "without", "never",
+// "doesn't", "lacks") flips a real mention into a denial of one.
 const GOLDEN_SET_MENTION = /\bgolden[- ]sets?\b/i;
+const CALIBRATION_MENTION = /\bcalibrat\w*/i;
+const NEGATION_NEARBY = /\b(?:no|not|without|never|doesn'?t|does\s+not|isn'?t|lacks?)\b/i;
+const NEGATION_LOOKBACK_CHARS = 30;
 
-function hasGoldenSetReference(text) {
-  return GOLDEN_SET_MENTION.test(text);
+function mentionedWithoutNegation(text, pattern) {
+  const match = pattern.exec(text);
+  if (!match) return false;
+  const precedingContext = text.slice(Math.max(0, match.index - NEGATION_LOOKBACK_CHARS), match.index);
+  return !NEGATION_NEARBY.test(precedingContext);
 }
 
-// Presence of calibration language ("calibrate"/"calibration"/"calibrated")
-// anywhere in the text — deliberately not requiring a specific percentage
-// pattern, since the discipline being checked is "a calibration
-// precondition is STATED at all", not parsing the exact target number
-// (which lib/calibration.mjs's real `isCalibrated`/`assertCalibrated`
-// already enforce mechanically against the recorded run, not the prose).
-const CALIBRATION_MENTION = /\bcalibrat\w*/i;
+function hasGoldenSetReference(text) {
+  return mentionedWithoutNegation(text, GOLDEN_SET_MENTION);
+}
 
 /**
  * Score the deterministic subset of `EVAL_SUITE_CHECKLIST` against a
@@ -103,6 +109,7 @@ export function scoreDeterministicChecklist(content) {
     // Vacuously true for a non-LLM-based (or undeclared) grader type — this
     // item is genuinely not applicable there, per the checklist's own
     // description, not a check being skipped.
-    calibrationRequiredForLLMGraders: graderType !== 'llm-based' || CALIBRATION_MENTION.test(text),
+    calibrationRequiredForLLMGraders:
+      graderType !== 'llm-based' || mentionedWithoutNegation(text, CALIBRATION_MENTION),
   };
 }

@@ -22,6 +22,22 @@ test('code-based and human graders are exempt from calibration wiring entirely',
   assert.doesNotThrow(() => assertEvalSuiteCalibrationWired({ graderType: 'human' }));
 });
 
+test('an unrecognized or missing graderType is rejected, never silently treated as exempt', () => {
+  // Regression: an earlier version only checked `graderType !== 'llm-based'`
+  // to decide exemption, so a typo, wrong casing, or omitted graderType all
+  // silently took the "no calibration needed" path a genuine code-based/
+  // human grader takes — exactly the gap this test locks in.
+  assert.throws(
+    () => assertEvalSuiteCalibrationWired({ graderType: 'LLM-based' }),
+    /graderType must be one of/,
+  );
+  assert.throws(
+    () => assertEvalSuiteCalibrationWired({ graderType: 'ai-based' }),
+    /graderType must be one of/,
+  );
+  assert.throws(() => assertEvalSuiteCalibrationWired({}), /graderType must be one of/);
+});
+
 test('an llm-based grader with no targetArtifactType is rejected before any calibration lookup', () => {
   assert.throws(
     () => assertEvalSuiteCalibrationWired({ graderType: 'llm-based' }),
@@ -32,13 +48,15 @@ test('an llm-based grader with no targetArtifactType is rejected before any cali
 test('an llm-based grader with no recorded calibration run for its target is rejected', () => {
   const path = tempCalibrationLogPath();
   try {
+    // Message delegated to lib/calibration.mjs's own assertCalibrated —
+    // "has never been calibrated", distinct from the below-target message.
     assert.throws(
       () =>
         assertEvalSuiteCalibrationWired(
           { graderType: 'llm-based', targetArtifactType: 'prompts' },
           { path },
         ),
-      /no calibration run is on record/,
+      /has never been calibrated/,
     );
   } finally {
     rmSync(path, { force: true });
@@ -66,7 +84,12 @@ test('an llm-based grader with a real, passing, fresh calibration run is accepte
   }
 });
 
-test('an llm-based grader whose recorded calibration scored below target is rejected', () => {
+test('an llm-based grader whose recorded calibration scored below target is rejected with an accurate message, not "no run recorded"', () => {
+  // Regression: an earlier version's error message always said "no
+  // calibration run is on record for it" even when a real run existed and
+  // merely scored below target — a self-contradictory message once the
+  // parenthetical ran alongside it. Delegating to assertCalibrated fixes
+  // this: the message here correctly names the actual scored percentage.
   const path = tempCalibrationLogPath();
   try {
     recordCalibrationRun(
@@ -82,7 +105,7 @@ test('an llm-based grader whose recorded calibration scored below target is reje
     assert.throws(
       () =>
         assertEvalSuiteCalibrationWired({ graderType: 'llm-based', targetArtifactType: 'goals' }, { path }),
-      /no calibration run is on record/,
+      /latest run scored 50% agreement/,
     );
   } finally {
     rmSync(path, { force: true });

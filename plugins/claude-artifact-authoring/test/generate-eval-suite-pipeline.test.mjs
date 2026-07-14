@@ -125,7 +125,7 @@ test('Task #79/#81: the worked example calibration wiring is rejected with no ru
     assert.throws(
       () =>
         assertEvalSuiteCalibrationWired({ graderType: 'llm-based', targetArtifactType: 'prompts' }, { path }),
-      /no calibration run is on record/,
+      /has never been calibrated/,
     );
     recordCalibrationRun(
       {

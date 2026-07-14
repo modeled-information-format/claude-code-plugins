@@ -120,3 +120,35 @@ test('hasGoldenSetReference matches both "golden set" prose and a "golden-sets/"
   assert.equal(scoreDeterministicChecklist('See golden-sets/prompts.json.').hasGoldenSetReference, true);
   assert.equal(scoreDeterministicChecklist('No reference set at all.').hasGoldenSetReference, false);
 });
+
+test('hasGoldenSetReference rejects a negated mention, not just any mention of the phrase', () => {
+  // Regression: a bare mention-presence check (no negation awareness) is
+  // the exact false-positive class Copilot caught on lib/goal-checklist.mjs's
+  // "Constraints: none" — "this suite does NOT use a golden set" also
+  // contains the phrase "golden set" but must not count as a real reference.
+  assert.equal(
+    scoreDeterministicChecklist('This eval suite does not use a golden set at all.').hasGoldenSetReference,
+    false,
+  );
+  assert.equal(
+    scoreDeterministicChecklist('No golden set is referenced here.').hasGoldenSetReference,
+    false,
+  );
+  assert.equal(
+    scoreDeterministicChecklist('Grading proceeds without a golden set.').hasGoldenSetReference,
+    false,
+  );
+});
+
+test('calibrationRequiredForLLMGraders rejects a negated calibration mention', () => {
+  assert.equal(
+    scoreDeterministicChecklist('Grader type: llm-based. No calibration is needed for this grader.')
+      .calibrationRequiredForLLMGraders,
+    false,
+  );
+  assert.equal(
+    scoreDeterministicChecklist('Grader type: llm-based. This grader does not require calibration.')
+      .calibrationRequiredForLLMGraders,
+    false,
+  );
+});

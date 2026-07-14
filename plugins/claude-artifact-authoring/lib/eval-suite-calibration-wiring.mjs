@@ -16,7 +16,8 @@
 // exist once — it must not have gone stale, per `needsRecalibration`'s
 // existing cadence (default 90 days). Checked here too.
 
-import { isCalibrated, needsRecalibration } from './calibration.mjs';
+import { assertCalibrated, needsRecalibration } from './calibration.mjs';
+import { GRADER_TYPES } from './eval-suite-checklist.mjs';
 
 /**
  * Assert that a drafted eval suite's calibration is genuinely wired into
@@ -29,10 +30,19 @@ import { isCalibrated, needsRecalibration } from './calibration.mjs';
  * @param {string} args.graderType - one of GRADER_TYPES (lib/eval-suite-checklist.mjs)
  * @param {string} [args.targetArtifactType] - the artifact type this suite
  *   grades (e.g. 'prompts', 'goals') — required when graderType is 'llm-based'.
- * @param {object} [opts] - passed through to isCalibrated/needsRecalibration
+ * @param {object} [opts] - passed through to assertCalibrated/needsRecalibration
  *   (e.g. `path` to override the calibration log location in tests).
  */
 export function assertEvalSuiteCalibrationWired({ graderType, targetArtifactType }, opts = {}) {
+  // Validated against the fixed enum, not just checked for equality with
+  // 'llm-based' — an unrecognized value (a typo, wrong casing, or omitted
+  // entirely) must be rejected outright, never silently take the "exempt,
+  // no calibration needed" path a genuine code-based/human grader takes.
+  if (!GRADER_TYPES.includes(graderType)) {
+    throw new Error(
+      `assertEvalSuiteCalibrationWired: graderType must be one of ${GRADER_TYPES.join(', ')}, got ${JSON.stringify(graderType)}.`,
+    );
+  }
   if (graderType !== 'llm-based') return;
 
   if (!targetArtifactType || typeof targetArtifactType !== 'string') {
@@ -42,14 +52,13 @@ export function assertEvalSuiteCalibrationWired({ graderType, targetArtifactType
     );
   }
 
-  const { calibrated, run } = isCalibrated(targetArtifactType, opts);
-  if (!calibrated) {
-    throw new Error(
-      `Eval suite grades "${targetArtifactType}" with an LLM-based grader, but no calibration run ` +
-        `is on record for it${run ? ` (latest scored below target)` : ''} — calibrate before this ` +
-        'suite may auto-grade unsupervised, per AD-4.',
-    );
-  }
+  // Delegates to lib/calibration.mjs's own assertCalibrated rather than
+  // re-deriving the calibrated/not-calibrated verdict here — it already
+  // correctly distinguishes "never calibrated" from "a run exists but
+  // scored below target," a distinction an earlier version of this
+  // function collapsed into a single, self-contradictory "no calibration
+  // run is on record (latest scored below target)" message.
+  assertCalibrated(targetArtifactType, opts);
 
   if (needsRecalibration(targetArtifactType, opts)) {
     throw new Error(
