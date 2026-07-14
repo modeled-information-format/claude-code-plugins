@@ -3,7 +3,7 @@ id: claude-code-plugins-claude-artifact-authoring-readme
 type: semantic
 created: '2026-07-13T00:00:00Z'
 namespace: claude-code-plugins/claude-artifact-authoring
-modified: '2026-07-14T01:21:19.847Z'
+modified: '2026-07-14T01:49:05.181Z'
 temporal:
   '@type': TemporalMetadata
   validFrom: '2026-07-13T00:00:00Z'
@@ -13,10 +13,10 @@ provenance:
   '@type': Provenance
   agent: claude-code/claude-sonnet-5
   wasGeneratedBy:
-    '@id': urn:mif:activity:claude-code-session:59776443-e228-4bd8-a2bd-e6be3c2a7f34
+    '@id': urn:mif:activity:claude-code-session:3921fa8c-0b9e-410e-b53c-6cf81b074757
     '@type': prov:Activity
   trustLevel: user_stated
-  agentVersion: 2.1.207
+  agentVersion: 2.1.208
 citations:
   - '@type': Citation
     citationType: documentation
@@ -43,12 +43,12 @@ graded, and discoverable across projects rather than one-off files.
 This plugin's design is specified in the architecture doc referenced by
 [Epic #40](https://github.com/modeled-information-format/claude-code-plugins/issues/40),
 which tracks its build via 14 Stories. This README will grow
-generator-by-generator as each Story lands; as of this Story (S6), the plugin
+generator-by-generator as each Story lands; as of this Story (S7), the plugin
 scaffold, the central `XDG_DATA_HOME` artifact store, the cross-cutting
 persistence pipeline, the OTel-compatible trace substrate, the
 calibrated-grading framework (with real golden sets for all 6 artifact
-types), central-corpus discovery indexing, and the first generator
-(**prompt**) exist.
+types), central-corpus discovery indexing, and the first two generators
+(**prompt**, **goal**) exist.
 
 ## Internals
 
@@ -148,14 +148,47 @@ types), central-corpus discovery indexing, and the first generator
   subagent example, `golden-sets/prompts.json`'s
   `good-code-review-subagent` entry) is automated in
   `test/generate-prompt-pipeline.test.mjs`, not left as prose.
+- `lib/goal-checklist.mjs` — the deterministic subset of the goal
+  generator's authoring checklist (Story S7 Tasks #70/#72/#75): a frozen
+  `GOAL_CHECKLIST` naming all 7 SMART-plus-two-experts items, with
+  `scoreDeterministicChecklist(content)` mechanically scoring the 3 a plain
+  function can check (`measurableVerifyCommand` via `extractVerifyCommands`
+  — an inline-code-span-shaped command parser — `timeBound`, an explicit
+  numeric turn/time bound, and `boundedConstraints`, an explicit
+  `Constraints:` section). Also exports `assertChecksGrounded` (Task #72:
+  every check in the generator's internal `checks[]` record carries its own
+  non-empty `groundedIn`, not one shared citation) and `lintChecksBalance`
+  (Task #75: every check with `negativeCaseApplicable: true` must carry a
+  `negativeCase`, never forced on checks where none applies).
+- `lib/verify-command-runner.mjs` — Task #75's "reference-solution smoke
+  test" made real rather than a shape check:
+  `runReferenceSolutionSmokeTest` actually `spawnSync`s a vetted
+  `{command, args}` pair (`shell: false`, never a concatenated shell
+  string) and reports whether it genuinely exited 0, distinguishing "ran and
+  passed" / "ran and failed" / "did not run" (e.g. `ENOENT`) / "timed out" —
+  never conflating a failing reference solution with a merely-unattempted
+  one. `splitVerifyCommand` turns a plain verify-command string into that
+  vetted pair, refusing (not silently mis-splitting) any shell
+  metacharacters it can't safely handle.
+- `skills/generate-goal/SKILL.md` — Story S7's generator: drafts an
+  internal `checks[]` record first (assertion + executable `verify` command
+  + per-check `groundedIn` + balanced positive/negative cases) and composes
+  the final `/goal`-shaped prose from it — never the reverse — then scores
+  the full checklist, actually executes a reference-solution smoke test
+  before shipping (Task #75), drafts L3 frontmatter with
+  `conceptType: 'semantic'` (Task #78, via
+  `ARTIFACT_TYPE_METADATA.goals`), and finishes the same
+  grade → persist sequence Story S6 established.
 - `npm test` (Node's built-in test runner) covers all of the
   above, including a **real cross-process** concurrency test for the store
   (separate OS processes, not same-thread async calls, so it actually
   exercises the `EEXIST`-retry path under real contention), a real
   request → artifact → evaluation trace round-trip, the real initial
-  calibration pass across all 6 golden sets, and a full
-  `persistDraftArtifact` round-trip for the prompt generator's worked
-  example.
+  calibration pass across all 6 golden sets, full `persistDraftArtifact`
+  round-trips for both the prompt and goal generators' worked examples, and
+  **real subprocess executions** (a genuinely passing, a genuinely failing,
+  and a genuinely timed-out reference solution) proving the goal
+  generator's achievability smoke test is a real execution, not simulated.
 
 ## Install
 
@@ -179,7 +212,7 @@ Epic #40's build order). Once it is:
 | Generator | Story | Status |
 | --- | --- | --- |
 | Prompt | S6 (#59) | Done |
-| Goal | S7 (#62) | Not started |
+| Goal | S7 (#62) | Done |
 | Loop | S8 (#64) | Not started |
 | Eval-suite | S9 (#68) | Not started |
 | Subagent-definition | S10 (#73) | Not started |
