@@ -137,11 +137,21 @@ Run `skills/grade-artifact/SKILL.md`'s sequence against the drafted prompt,
 using `golden-sets/prompts.json`'s stated `criteria`:
 
 1. `assertCalibrated('prompts')` first (from `lib/calibration.mjs`). **Stop**
-   if it throws — do not grade unsupervised, per AD-4. (Story S4's initial
-   calibration for `prompts` is already recorded at 100% agreement, so this
-   should already pass; this skill does not re-run calibration itself — see
-   `skills/grade-artifact/SKILL.md`'s step 4 for the re-calibration
-   sequence, only needed when `needsRecalibration('prompts')` returns true.)
+   if it throws — do not grade unsupervised, per AD-4. Story S4's 100%-
+   agreement calibration pass for `prompts` is real, but it was only ever
+   recorded to `test/initial-calibration.test.mjs`'s own throwaway temp
+   path, not the real
+   `${XDG_STATE_HOME:-~/.local/state}/claude-artifact-authoring/calibration-runs.jsonl`
+   this assertion actually reads — nothing in this plugin persists a
+   calibration run to that real path automatically. **Expect this to throw
+   on a genuinely first real invocation**, and treat that as the normal,
+   required "run calibration for real before auto-grading" path, not a
+   bug: follow `skills/grade-artifact/SKILL.md`'s step 1 framing exactly
+   (either run its step 4 calibration sequence for `prompts` first, or
+   route this artifact to human review instead of auto-grading). Once a
+   real calibration run has been recorded once, subsequent invocations
+   only re-hit this path when `needsRecalibration('prompts')` returns true
+   (its own step 4).
 2. Judge the drafted prompt using G-Eval two-stage ordering against
    `golden-sets/prompts.json`'s criteria — reason step by step, then emit a
    single pass/fail verdict. Grade the final drafted prompt, not the

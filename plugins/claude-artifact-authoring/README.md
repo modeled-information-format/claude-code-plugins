@@ -3,7 +3,7 @@ id: claude-code-plugins-claude-artifact-authoring-readme
 type: semantic
 created: '2026-07-13T00:00:00Z'
 namespace: claude-code-plugins/claude-artifact-authoring
-modified: '2026-07-14T00:58:11.381Z'
+modified: '2026-07-14T01:12:06.970Z'
 temporal:
   '@type': TemporalMetadata
   validFrom: '2026-07-13T00:00:00Z'
@@ -148,7 +148,7 @@ types), central-corpus discovery indexing, and the first generator
   subagent example, `golden-sets/prompts.json`'s
   `good-code-review-subagent` entry) is automated in
   `test/generate-prompt-pipeline.test.mjs`, not left as prose.
-- `npm test` (Node's built-in test runner, 102 tests) covers all of the
+- `npm test` (Node's built-in test runner, 105 tests) covers all of the
   above, including a **real cross-process** concurrency test for the store
   (separate OS processes, not same-thread async calls, so it actually
   exercises the `EEXIST`-retry path under real contention), a real

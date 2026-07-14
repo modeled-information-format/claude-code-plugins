@@ -107,6 +107,28 @@ test('xmlDelimiting is case-insensitive when pairing tag names', () => {
   );
 });
 
+test('xmlDelimiting excludes <thinking>/<answer> — they have their own checklist item and must not double-count', () => {
+  assert.equal(
+    scoreDeterministicChecklist('<thinking>reason</thinking><answer>verdict</answer>').xmlDelimiting,
+    false,
+    'a prompt using only tiered-CoT tags, with zero content-sectioning tags, must not pass xmlDelimiting',
+  );
+  assert.equal(
+    scoreDeterministicChecklist(
+      '<context>a</context><thinking>reason</thinking><answer>verdict</answer>',
+    ).xmlDelimiting,
+    false,
+    'one real section tag plus the CoT pair is still only one distinct section tag',
+  );
+  assert.equal(
+    scoreDeterministicChecklist(
+      '<context>a</context><role>b</role><thinking>reason</thinking><answer>verdict</answer>',
+    ).xmlDelimiting,
+    true,
+    'two real section tags pass regardless of an additional CoT pair alongside them',
+  );
+});
+
 test('tieredChainOfThought: both tags pass, neither tag passes (N/A), exactly one tag fails', () => {
   assert.equal(
     scoreDeterministicChecklist('<thinking>reason</thinking><answer>verdict</answer>').tieredChainOfThought,
@@ -126,6 +148,33 @@ test('tieredChainOfThought: both tags pass, neither tag passes (N/A), exactly on
     scoreDeterministicChecklist('<answer>verdict</answer>').tieredChainOfThought,
     false,
     'answer without a matching thinking step is a broken tiering, not a passing one',
+  );
+});
+
+test('tieredChainOfThought recognizes an unclosed instructional mention, not only a closed pair', () => {
+  // The real, common pattern: a system prompt instructs the model to
+  // produce its own <thinking>/<answer> tags in its OUTPUT, without ever
+  // containing a closed demonstration pair in the prompt's own text —
+  // exactly how golden-sets/prompts.json's "good-code-review-subagent"
+  // entry is written ("think step by step in <thinking> tags... before
+  // writing your <answer> verdict", no closing tags anywhere).
+  assert.equal(
+    scoreDeterministicChecklist('think step by step in <thinking> tags before your <answer>.')
+      .tieredChainOfThought,
+    true,
+    'bare instructional mentions of both tag names must count as a consistent tiering',
+  );
+  assert.equal(
+    scoreDeterministicChecklist('think step by step in <thinking> tags first.').tieredChainOfThought,
+    false,
+    'mentioning only <thinking> without any <answer> mention is still a broken tiering',
+  );
+});
+
+test('tieredChainOfThought tag mentions are matched case-insensitively', () => {
+  assert.equal(
+    scoreDeterministicChecklist('use <Thinking> then <Answer> tags.').tieredChainOfThought,
+    true,
   );
 });
 

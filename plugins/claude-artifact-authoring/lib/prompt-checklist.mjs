@@ -13,10 +13,14 @@
 // eight items. Only three are mechanically checkable from the artifact's
 // text alone:
 //   - fewShotExamples: counts <example>...</example> blocks.
-//   - xmlDelimiting: distinct, properly-paired XML-style section tags.
-//   - tieredChainOfThought: <thinking>/<answer> tiering, checked for
-//     internal consistency rather than mere presence (see the function's
-//     own comment for why "has <thinking>" alone is not the check).
+//   - xmlDelimiting: distinct, properly-paired XML-style section tags,
+//     excluding <example> and the tiered-CoT tags (they have their own
+//     dedicated checklist items and must not double-count here).
+//   - tieredChainOfThought: whether both <thinking> and <answer> are
+//     mentioned, or neither is — never exactly one (see the function's own
+//     comment for why this checks consistent *mention*, not that every
+//     individual tag instance is literally paired, and why an unclosed
+//     instructional mention still counts as a real mention).
 // The other five (clarity/golden rule, contextual justification,
 // role-setting, right altitude, document-and-quote grounding) require
 // judging whether prose is *actually* clear, *actually* justified,
@@ -123,25 +127,56 @@ function pairedTagNames(content) {
  *   full markdown — this function only looks at literal tag text, so
  *   frontmatter noise above it doesn't affect the result).
  */
+// Tags that have their own dedicated checklist item and must never count
+// toward xmlDelimiting's "distinct content-sectioning tags" tally — without
+// this exclusion, a prompt using only <thinking>/<answer> tiering (with zero
+// actual content-sectioning tags like <context>/<role>) would satisfy
+// xmlDelimiting for free, collapsing two independent checklist items into
+// one.
+const TIERED_COT_TAG_NAMES = new Set(['thinking', 'answer']);
+
+// A tiered-CoT tag is scored as "mentioned" on either a real opening tag or
+// a real closing tag, not only a fully-closed pair — a system prompt's job
+// is normally to *instruct* the model to produce its own <thinking>/<answer>
+// tags in its output, not to contain a closed demonstration pair itself
+// (golden-sets/prompts.json's own "good-code-review-subagent" entry does
+// exactly this: "think step by step in <thinking> tags... before writing
+// your <answer> verdict", with no closing tags anywhere in the system
+// prompt text). Requiring a closed pair would fail every prompt that uses
+// this correct, common instructional pattern. Matched case-insensitively —
+// pairedTagNames() already normalizes case for the same reason.
+function mentionsTag(text, tagName) {
+  return new RegExp(`<${tagName}[\\s>]|</${tagName}>`, 'i').test(text);
+}
+
 export function scoreDeterministicChecklist(content) {
   const text = typeof content === 'string' ? content : '';
 
   const exampleBlocks = [...text.matchAll(/<example>[\s\S]*?<\/example>/g)];
   const fewShotExamples = exampleBlocks.length >= 3 && exampleBlocks.length <= 5;
 
-  const nonExampleTags = pairedTagNames(text).filter((name) => name !== 'example');
-  const xmlDelimiting = nonExampleTags.length >= 2;
+  const nonSectionTags = pairedTagNames(text).filter(
+    (name) => name !== 'example' && !TIERED_COT_TAG_NAMES.has(name),
+  );
+  const xmlDelimiting = nonSectionTags.length >= 2;
 
-  // "Tiered" means both tags present and consistently paired, not merely
-  // "contains <thinking>" — a prompt with <thinking> but no matching
-  // <answer> (or vice versa) is a broken tiering, not a passing one. A
-  // prompt with neither tag is treated as having no reasoning step at all,
-  // which this deterministic check cannot fault: whether a reasoning step
-  // was actually *needed* is a judgment call this function has no basis to
-  // make, so it passes rather than penalizing a prompt for a design choice
-  // it can't evaluate.
-  const hasThinking = /<thinking>[\s\S]*?<\/thinking>/.test(text);
-  const hasAnswer = /<answer>[\s\S]*?<\/answer>/.test(text);
+  // This checks *consistent mention* of both tag names, not that every
+  // <thinking> instance has a literal matching <answer> instance nearby: a
+  // prompt legitimately mentions <thinking> more than once (e.g. "for each
+  // finding, think in <thinking> tags before your <answer>" describes a
+  // per-item loop, not a single literal pair) without that being a broken
+  // tiering. What IS broken is one tag name never appearing at all while
+  // the other does — a prompt referencing <thinking> but never <answer>
+  // (or vice versa). A prompt with neither tag is treated as having no
+  // reasoning step at all, which this deterministic check cannot fault:
+  // whether a reasoning step was actually *needed* is a judgment call this
+  // function has no basis to make, so it passes rather than penalizing a
+  // prompt for a design choice it can't evaluate. Verifying the tags are
+  // genuinely *well-formed* pairs where they do appear (not just mentioned)
+  // is a judgment call left to the invoking agent, same as the five
+  // fully-judgment checklist items above.
+  const hasThinking = mentionsTag(text, 'thinking');
+  const hasAnswer = mentionsTag(text, 'answer');
   const tieredChainOfThought = hasThinking === hasAnswer;
 
   return { fewShotExamples, xmlDelimiting, tieredChainOfThought };
