@@ -137,6 +137,7 @@ test('the worked example (good-auth-tests-goal) exists in the golden set', () =>
 });
 
 test('the worked example passes every deterministic checklist item', () => {
+  assert.ok(WORKED_EXAMPLE, 'golden-sets/goals.json must carry the "good-auth-tests-goal" entry');
   const scores = scoreDeterministicChecklist(WORKED_EXAMPLE.content);
   for (const key of DETERMINISTIC_CHECKLIST_KEYS) {
     assert.equal(scores[key], true, `expected the worked example to pass "${key}", got ${JSON.stringify(scores)}`);
@@ -195,6 +196,7 @@ test('a checklist item failing the contract is actually caught (contract is not 
 });
 
 test('full persistDraftArtifact round-trip for the worked example, promoted after a passing gate simulation', () => {
+  assert.ok(WORKED_EXAMPLE, 'golden-sets/goals.json must carry the "good-auth-tests-goal" entry');
   const root = tempStoreRoot();
   const configDir = tempConfigDirWithMifDocs();
   try {
@@ -229,6 +231,7 @@ test('full persistDraftArtifact round-trip for the worked example, promoted afte
 });
 
 test('persistDraftArtifact rejects the worked example when a required element is dropped, even with a well-formed extensions block present', () => {
+  assert.ok(WORKED_EXAMPLE, 'golden-sets/goals.json must carry the "good-auth-tests-goal" entry');
   const root = tempStoreRoot();
   const configDir = tempConfigDirWithMifDocs();
   try {

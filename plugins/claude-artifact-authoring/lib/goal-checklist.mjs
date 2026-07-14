@@ -88,34 +88,52 @@ export const DETERMINISTIC_CHECKLIST_KEYS = Object.freeze(
   GOAL_CHECKLIST.filter((item) => item.deterministic).map((item) => item.key),
 );
 
-// A code span counts as naming an executable command only if its content
-// actually looks like one: a leading program-name-or-path token (letters,
-// digits, "./_-"), optionally followed by space-separated arguments that are
-// not themselves whitespace. This rejects a backticked English phrase like
-// `looks nice` (two plain words, no path-like first token... actually this
-// heuristic alone wouldn't reject that — see the exclusion list below) while
-// accepting `pytest test/auth -q`, `ruff check src/auth`, `markdownlint
-// README.md`, `npm test`, etc.
-const COMMAND_LIKE = /^[A-Za-z0-9._/-]+(\s+\S+)*$/;
-
-// A small, fixed list of common non-command English words that would
-// otherwise slip past COMMAND_LIKE's shape-only check when used as the
-// FIRST token of a backticked span (e.g. `` `is good` `` shape-matches but
-// is prose, not a command). Kept short and specific rather than attempting
-// general English detection, which this deterministic function has no
-// business doing.
-const NON_COMMAND_FIRST_WORDS = new Set([
-  'is', 'are', 'was', 'were', 'be', 'been', 'the', 'a', 'an', 'this', 'that',
-  'good', 'bad', 'nice', 'better', 'useful', 'clean', 'improve', 'improved',
+// A code span counts as naming an executable command only if it exhibits an
+// actual CLI-invocation signal — not merely a shape a plain English phrase
+// could also match. An earlier version of this module tried a shape-only
+// regex plus a fixed exclusion list of non-command first words (e.g.
+// rejecting `is good`), but that approach is trivially gamed: a backticked
+// phrase like `looks nice` or `works well` shape-matches and has a first
+// word absent from any small fixed exclusion list, so it would score as a
+// valid "measurable verify command" — precisely the false pass Task #70's
+// bar exists to prevent. Distinguishing arbitrary English from a shell
+// invocation by shape alone is not reliably solvable; instead this looks for
+// a positive, genuinely CLI-specific signal:
+//   - a flag-like token (`-q`, `--strict`), or
+//   - a token containing a path separator ("/"), or
+//   - a token matching a common filename extension (`.py`, `.md`, `.json`,
+//     `.mjs`, `.js`, `.sh`, `.yml`, `.yaml`, `.toml`), or
+//   - the first token matching a small allowlist of common CLI tool names.
+// A span must ALSO have at least 2 whitespace-separated tokens — a bare
+// single word (a lone path reference like `test/auth`, or a lone adjective
+// like `better`) is never itself a runnable invocation, only ever an
+// argument or a description; requiring an actual invocation shape (program +
+// argument) also fixes an over-extraction case an earlier version had: a
+// bare `` `test/auth` `` span (a path *mentioned* in prose, not itself
+// invoked) no longer counts as a command.
+const FLAG_TOKEN = /^--?[A-Za-z]/;
+const PATH_TOKEN = /\//;
+const EXTENSION_TOKEN = /\.(py|md|json|mjs|js|sh|ya?ml|toml|rb|go|rs)$/i;
+const KNOWN_TOOL_NAMES = new Set([
+  'pytest', 'ruff', 'npm', 'npx', 'yarn', 'pnpm', 'node', 'python', 'python3',
+  'git', 'cargo', 'go', 'make', 'eslint', 'jest', 'mocha', 'markdownlint',
+  'docker', 'kubectl', 'ajv', 'mypy', 'flake8', 'black', 'tsc', 'vitest',
 ]);
+
+function looksLikeInvocation(span) {
+  const tokens = span.split(/\s+/).filter(Boolean);
+  if (tokens.length < 2) return false;
+  if (KNOWN_TOOL_NAMES.has(tokens[0].toLowerCase())) return true;
+  return tokens.some((t) => FLAG_TOKEN.test(t) || PATH_TOKEN.test(t) || EXTENSION_TOKEN.test(t));
+}
 
 /**
  * Extract every inline (single-backtick) code span from `content` whose text
- * looks like an executable command, per the heuristic above. Returns the raw
- * span contents (backticks stripped), in document order. Triple-backtick
- * fenced blocks are deliberately excluded — this plugin's goal prose form
- * inlines its verify commands (see golden-sets/goals.json), it doesn't fence
- * them.
+ * exhibits a genuine CLI-invocation signal, per `looksLikeInvocation` above.
+ * Returns the raw span contents (backticks stripped), in document order.
+ * Triple-backtick fenced blocks are deliberately excluded — this plugin's
+ * goal prose form inlines its verify commands (see golden-sets/goals.json),
+ * it doesn't fence them.
  */
 export function extractVerifyCommands(content) {
   const text = typeof content === 'string' ? content : '';
@@ -125,10 +143,7 @@ export function extractVerifyCommands(content) {
   // a longer ``` fence.
   for (const m of text.matchAll(/(?<!`)`([^`]+)`(?!`)/g)) {
     const span = m[1].trim();
-    if (!span || !COMMAND_LIKE.test(span)) continue;
-    const firstWord = span.split(/\s+/)[0].toLowerCase();
-    if (NON_COMMAND_FIRST_WORDS.has(firstWord)) continue;
-    commands.push(span);
+    if (span && looksLikeInvocation(span)) commands.push(span);
   }
   return commands;
 }

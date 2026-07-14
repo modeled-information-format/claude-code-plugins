@@ -77,6 +77,30 @@ test('extractVerifyCommands finds command-shaped backticked spans and skips pros
   assert.deepEqual(extractVerifyCommands('no backticks at all'), []);
 });
 
+test('extractVerifyCommands rejects two-word prose that shape-matches but has no real CLI signal', () => {
+  // Regression: an earlier version used a shape-only regex plus a small
+  // fixed exclusion list of non-command first words, which a phrase like
+  // `looks nice` or `works well` slipped past (neither "looks" nor "works"
+  // was on the exclusion list) — scoring plain prose as a valid executable
+  // verify command, exactly the false pass Task #70's bar exists to catch.
+  assert.deepEqual(extractVerifyCommands('the plan `looks nice` overall'), []);
+  assert.deepEqual(extractVerifyCommands('the code `works well` here'), []);
+});
+
+test('extractVerifyCommands does not count a bare single-token path reference as a command', () => {
+  // Regression: a lone `test/auth` mentioned in prose (e.g. inside a
+  // Constraints clause) is a path being referenced, not a command being
+  // invoked — it must not inflate the extracted-commands count.
+  assert.deepEqual(extractVerifyCommands('only touch files under `test/auth`'), []);
+});
+
+test('extractVerifyCommands recognizes flag tokens, path tokens, and known tool names as real CLI signals', () => {
+  assert.deepEqual(extractVerifyCommands('`npm test`'), ['npm test']);
+  assert.deepEqual(extractVerifyCommands('`ruff check src/auth`'), ['ruff check src/auth']);
+  assert.deepEqual(extractVerifyCommands('`somebinary --strict`'), ['somebinary --strict']);
+  assert.deepEqual(extractVerifyCommands('`unknownthing README.md`'), ['unknownthing README.md']);
+});
+
 test('extractVerifyCommands excludes triple-backtick fenced blocks', () => {
   assert.deepEqual(extractVerifyCommands('```\nnpm test\n```'), []);
 });
