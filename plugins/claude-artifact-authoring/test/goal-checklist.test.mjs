@@ -152,6 +152,23 @@ test('boundedConstraints rejects an empty "Constraints:" header with nothing aft
   assert.equal(scoreDeterministicChecklist('Constraints: .').boundedConstraints, false);
 });
 
+test('boundedConstraints does not truncate a decimal value in the constraint', () => {
+  // Regression: Copilot flagged the identical truncation bug on
+  // lib/loop-checklist.mjs's analogous STOP_CONDITION_HEADER (Story S8,
+  // PR #110) — stopping the capture at the first "." cut a decimal
+  // constraint like "under 0.5GB" down to "under 0". Fixed here the same
+  // way: capture to end-of-line, reject punctuation-only bodies instead.
+  assert.equal(
+    scoreDeterministicChecklist('Constraints: keep memory under 0.5GB.').boundedConstraints,
+    true,
+  );
+  assert.equal(scoreDeterministicChecklist('Constraints: 0.5.').boundedConstraints, true);
+});
+
+test('boundedConstraints rejects a punctuation-only body', () => {
+  assert.equal(scoreDeterministicChecklist('Constraints: ,;.').boundedConstraints, false);
+});
+
 // --- Task #72: per-check grounding ---
 
 test('assertChecksGrounded passes when every check has a non-empty groundedIn', () => {

@@ -165,14 +165,22 @@ const STOP_CONDITION_PATTERN = /\bstop\s+(?:after|within)\b[^.]{0,30}?\d+/i;
 // captured body — \s would cross a newline and let the FOLLOWING sentence
 // (e.g. a stop-condition line right after an empty "Constraints:" header on
 // its own line) get misread as if it were the constraint content itself.
-const CONSTRAINTS_HEADER = /\bconstraints?\s*:[ \t]*([^.\n]*)/i;
-const UNBOUNDED_CONSTRAINTS_BODY = /^(?:none|n\/a|no constraints?)$/i;
+// Captures to end-of-LINE (not stopping at the first "."), unlike an
+// earlier version that truncated at any period — Copilot flagged the exact
+// same truncation bug on lib/loop-checklist.mjs's analogous
+// STOP_CONDITION_HEADER (Story S8, PR #110): stopping at the first period
+// wrongly cut a decimal constraint like "keep memory under 0.5GB" down to
+// "keep memory under 0". Punctuation-only content is rejected by the
+// trailing-punctuation check below instead of an early truncation.
+const CONSTRAINTS_HEADER = /\bconstraints?\s*:[ \t]*([^\n]*)/i;
+const UNBOUNDED_CONSTRAINTS_BODY = /^(?:none|n\/a|no constraints?)\.?$/i;
+const CONSTRAINTS_PUNCTUATION_ONLY = /^[.,;:!?]*$/;
 
 function hasBoundedConstraints(text) {
   const match = text.match(CONSTRAINTS_HEADER);
   if (!match) return false;
   const body = match[1].trim();
-  if (!body) return false;
+  if (!body || CONSTRAINTS_PUNCTUATION_ONLY.test(body)) return false;
   return !UNBOUNDED_CONSTRAINTS_BODY.test(body);
 }
 
