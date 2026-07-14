@@ -127,6 +127,58 @@ test('hasRecursiveSchema does not flag non-recursive nesting (an array of object
   );
 });
 
+test('hasRecursiveSchema does not flag a $ref to a text-prefix sibling name as a false ancestor', () => {
+  // Regression: raw string-prefix comparison ("node" is a text prefix of
+  // "node2") wrongly flagged this as recursive. Segment-based comparison
+  // correctly sees "node2" is a sibling, not a descendant of "node".
+  assert.equal(
+    hasRecursiveSchema({
+      type: 'object',
+      properties: {
+        node: { type: 'object', properties: { label: { type: 'string' } } },
+        node2: {
+          type: 'object',
+          properties: { child: { $ref: '#/properties/node' } },
+        },
+      },
+    }),
+    false,
+  );
+});
+
+test('hasRecursiveSchema detects an indirect cycle through two mutually-referencing $defs entries', () => {
+  // Regression: an earlier version only checked whether a $ref's target
+  // was an ancestor of the CURRENT node — a direct/ancestor-only check.
+  // A recurses to B, B recurses back to A is a genuine cycle neither ref's
+  // target is an ancestor of the other's own location, so this needs a
+  // real graph-cycle check over the $defs entries, not path comparison.
+  assert.equal(
+    hasRecursiveSchema({
+      type: 'object',
+      $defs: {
+        A: { type: 'object', properties: { b: { $ref: '#/$defs/B' } } },
+        B: { type: 'object', properties: { a: { $ref: '#/$defs/A' } } },
+      },
+      properties: { root: { $ref: '#/$defs/A' } },
+    }),
+    true,
+  );
+});
+
+test('hasRecursiveSchema does not flag two independent, non-cyclic $defs entries', () => {
+  assert.equal(
+    hasRecursiveSchema({
+      type: 'object',
+      $defs: {
+        A: { type: 'object', properties: { name: { type: 'string' } } },
+        B: { type: 'object', properties: { ref: { $ref: '#/$defs/A' } } },
+      },
+      properties: { root: { $ref: '#/$defs/B' } },
+    }),
+    false,
+  );
+});
+
 test('hasNumericalBoundConstraints detects minimum/maximum/exclusiveMinimum/exclusiveMaximum/multipleOf anywhere', () => {
   assert.equal(hasNumericalBoundConstraints({ type: 'integer', minimum: 1 }), true);
   assert.equal(hasNumericalBoundConstraints({ type: 'integer', maximum: 5 }), true);
@@ -143,6 +195,25 @@ test('hasNumericalBoundConstraints detects minimum/maximum/exclusiveMinimum/excl
   assert.equal(hasNumericalBoundConstraints({ type: 'integer', description: 'no bounds here' }), false);
 });
 
+test('hasNumericalBoundConstraints does not mistake a parameter NAMED "minimum"/"maximum" for the keyword itself', () => {
+  // Regression: a naive walk that inspects every object's keys blindly
+  // (rather than only a genuine schema NODE's own keys) mistook a
+  // price-range tool's "minimum"/"maximum" PARAMETER NAMES — arbitrary
+  // identifiers under "properties", never keywords — for the forbidden
+  // keyword. The parameter's own sub-schema here has no minimum/maximum
+  // keyword at all, just type + description.
+  assert.equal(
+    hasNumericalBoundConstraints({
+      type: 'object',
+      properties: {
+        minimum: { type: 'integer', description: 'the minimum price' },
+        maximum: { type: 'integer', description: 'the maximum price' },
+      },
+    }),
+    false,
+  );
+});
+
 test('hasComplexRegex detects a pattern keyword anywhere', () => {
   assert.equal(hasComplexRegex({ type: 'string', pattern: '^[A-Z]+$' }), true);
   assert.equal(
@@ -150,6 +221,20 @@ test('hasComplexRegex detects a pattern keyword anywhere', () => {
     true,
   );
   assert.equal(hasComplexRegex({ type: 'string' }), false);
+});
+
+test('hasComplexRegex does not mistake a parameter NAMED "pattern" for the keyword itself', () => {
+  // Regression: same false-positive class as the minimum/maximum test
+  // above — a glob-search tool's "pattern" PARAMETER NAME (its sub-schema
+  // has no actual "pattern" keyword, just type + description) was
+  // previously indistinguishable from the forbidden regex keyword.
+  assert.equal(
+    hasComplexRegex({
+      type: 'object',
+      properties: { pattern: { type: 'string', description: 'a glob pattern to match files' } },
+    }),
+    false,
+  );
 });
 
 // --- Task #89: explicit derivation-strategy and output-logic choice ---

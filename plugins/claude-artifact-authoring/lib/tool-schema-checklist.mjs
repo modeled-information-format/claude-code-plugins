@@ -74,46 +74,195 @@ function isValidToolSchemaShape(parsed) {
   );
 }
 
+// A structurally-aware walk over a parsed JSON Schema node, distinguishing
+// genuine schema KEYWORDS from arbitrary identifiers that merely sit at
+// locations a keyword could also occupy. Two earlier, naive approaches
+// were both confirmed broken by review:
+//   - Walking every object VALUE blindly (treating any key as inspectable)
+//     means a parameter literally NAMED "pattern" or "minimum" (e.g. a
+//     glob-search tool's `pattern` argument, or a price-range tool's
+//     `minimum`/`maximum` arguments) gets its NAME mistaken for the
+//     keyword itself, even though its own sub-schema never declares that
+//     keyword — `hasComplexRegex({ properties: { pattern: { type: 'string' } } })`
+//     wrongly returned `true`.
+//   - Detecting a recursive `$ref` via raw string-prefix path comparison
+//     (`currentPath.startsWith(target.slice(1))`) has no JSON-Pointer
+//     segment boundary, so a sibling named "node2" false-triggers against
+//     a ref targeting "node" (`"node"` is a plain string-prefix of
+//     `"node2"`); and it only catches a ref pointing directly at one of
+//     ITS OWN ancestors, missing an indirect cycle through named `$defs`
+//     (A refs B, B refs A) entirely.
+//
+// The fix: only recurse into the JSON-Schema-STRUCTURAL locations where a
+// nested value is genuinely another schema (never into "properties"'/
+// "$defs"'/"definitions"' own KEYS, which are arbitrary identifiers, only
+// into their VALUES), and detect recursion via a real graph-cycle check
+// over $defs/definitions/root — the only locations a `$ref` conventionally
+// targets — rather than raw path-string comparison.
+
+// Maps of name -> sub-schema: the KEYS are arbitrary identifiers (parameter
+// names, or definition names) and must never be treated as keywords; only
+// the VALUES are schemas to recurse into.
+const SCHEMA_NAME_MAPS = ['properties', '$defs', 'definitions'];
+// Arrays of sub-schemas.
+const SCHEMA_ARRAYS = ['anyOf', 'oneOf', 'allOf'];
+// A single sub-schema (or, for "items" in older drafts, an array of them).
+const SCHEMA_SINGLE = ['items', 'additionalProperties', 'not', 'contains'];
+
 /**
- * Walk a parsed JSON Schema node looking for a `$ref` that resolves back
- * to an ancestor — the schema root (`"#"`) or any JSON Pointer path that is
- * a prefix of the ref's own location. This is a real structural walk, not
- * a literal `"$ref": "#"` string search: it also catches a ref pointing at
- * `"#/properties/children"` from underneath that very node, which a naive
- * search for the exact root marker would miss.
+ * Visit every genuine schema node reachable from `root` (never a
+ * "properties"/"$defs" KEY, only its VALUE), calling `visit(node, path)`
+ * for each — `path` is that node's JSON Pointer, used by both the
+ * unsupported-keyword checks (which only ever inspect a visited node's
+ * OWN direct keys) and the recursive-schema graph builder below.
  */
-export function hasRecursiveSchema(node, currentPath = '') {
-  if (node === null || typeof node !== 'object') return false;
-  if (Array.isArray(node)) {
-    return node.some((item, i) => hasRecursiveSchema(item, `${currentPath}/${i}`));
+function walkSchemaNodes(root, path, visit) {
+  if (root === null || typeof root !== 'object' || Array.isArray(root)) return;
+  visit(root, path);
+  for (const key of SCHEMA_NAME_MAPS) {
+    const map = root[key];
+    if (map && typeof map === 'object' && !Array.isArray(map)) {
+      for (const [name, subSchema] of Object.entries(map)) {
+        walkSchemaNodes(subSchema, `${path}/${key}/${name}`, visit);
+      }
+    }
   }
-  if (typeof node.$ref === 'string') {
-    const target = node.$ref;
-    if (target === '#') return true;
-    if (target.startsWith('#/') && currentPath.startsWith(target.slice(1))) return true;
+  for (const key of SCHEMA_ARRAYS) {
+    if (Array.isArray(root[key])) {
+      root[key].forEach((subSchema, i) => walkSchemaNodes(subSchema, `${path}/${key}/${i}`, visit));
+    }
   }
-  return Object.entries(node).some(
-    ([key, value]) => value !== null && typeof value === 'object' && hasRecursiveSchema(value, `${currentPath}/${key}`),
-  );
+  for (const key of SCHEMA_SINGLE) {
+    const value = root[key];
+    if (Array.isArray(value)) {
+      value.forEach((subSchema, i) => walkSchemaNodes(subSchema, `${path}/${key}/${i}`, visit));
+    } else if (value && typeof value === 'object') {
+      walkSchemaNodes(value, `${path}/${key}`, visit);
+    }
+  }
+}
+
+/** The definition locations a `$ref` can conventionally target: the schema root, plus every named `$defs`/`definitions` entry. */
+function collectDefinitions(root) {
+  const defs = new Map([['', root]]);
+  for (const key of ['$defs', 'definitions']) {
+    const map = root[key];
+    if (map && typeof map === 'object' && !Array.isArray(map)) {
+      for (const [name, subSchema] of Object.entries(map)) {
+        defs.set(`/${key}/${name}`, subSchema);
+      }
+    }
+  }
+  return defs;
+}
+
+/** `"#"` resolves to the schema root (`''`); `"#/a/b"` resolves to `'/a/b'`; any other form (an `$anchor`, an external ref) is not resolvable here and returns `null`. */
+function refTargetPath(ref) {
+  if (ref === '#') return '';
+  if (ref.startsWith('#/')) return ref.slice(1);
+  return null;
+}
+
+/**
+ * Build a directed graph over the schema's definition locations (root +
+ * every `$defs`/`definitions` entry): an edge from A to B means A's own
+ * subtree contains a `$ref` resolving to B. A cycle in this graph — direct
+ * (A refs itself) or indirect (A refs B, B refs A) — is a genuinely
+ * recursive schema, unsupported by Structured Outputs' constrained-
+ * decoding compiler.
+ */
+function buildDefinitionRefGraph(root) {
+  const defs = collectDefinitions(root);
+  const graph = new Map();
+  for (const [defPath, defSchema] of defs) {
+    const targets = new Set();
+    walkSchemaNodes(defSchema, defPath, (node) => {
+      if (typeof node.$ref === 'string') {
+        const target = refTargetPath(node.$ref);
+        if (target !== null && defs.has(target)) targets.add(target);
+      }
+    });
+    graph.set(defPath, targets);
+  }
+  return graph;
+}
+
+function hasCycle(graph) {
+  const UNVISITED = 0;
+  const IN_PROGRESS = 1;
+  const DONE = 2;
+  const state = new Map([...graph.keys()].map((node) => [node, UNVISITED]));
+
+  function visit(node) {
+    state.set(node, IN_PROGRESS);
+    for (const neighbor of graph.get(node) ?? []) {
+      const neighborState = state.get(neighbor);
+      if (neighborState === IN_PROGRESS) return true; // back edge -> real cycle
+      if (neighborState === UNVISITED && visit(neighbor)) return true;
+    }
+    state.set(node, DONE);
+    return false;
+  }
+
+  return [...graph.keys()].some((node) => state.get(node) === UNVISITED && visit(node));
+}
+
+// JSON-Pointer SEGMENT comparison (split on "/", compare element by
+// element), not a raw string-prefix test — `"/properties/node"` is a text
+// substring of `"/properties/node2/..."` but must NOT count as an ancestor
+// pointer; segment comparison correctly rejects that while still
+// recognizing a genuine ancestor like `"/properties/node"` under
+// `"/properties/node/properties/child"`.
+function isAncestorPointer(targetPath, currentPath) {
+  const targetSegments = targetPath.split('/').filter(Boolean);
+  const currentSegments = currentPath.split('/').filter(Boolean);
+  if (targetSegments.length > currentSegments.length) return false;
+  return targetSegments.every((segment, i) => currentSegments[i] === segment);
+}
+
+/**
+ * True if the schema contains a genuinely recursive `$ref` — either a
+ * direct/ancestor self-reference (segment-compared, not string-prefix
+ * compared) anywhere in the tree, or an indirect cycle through named
+ * `$defs`/`definitions` entries (A refs B, B refs A) via a real graph-cycle
+ * check. Neither the earlier naive string-prefix comparison (false-positive
+ * on text-prefix sibling names, e.g. "node" vs "node2") nor a same-subtree-
+ * only walk (false-negative on a two-`$defs`-entry mutual cycle) alone
+ * would catch both cases.
+ */
+export function hasRecursiveSchema(root) {
+  if (root === null || typeof root !== 'object') return false;
+
+  let hasDirectSelfReference = false;
+  walkSchemaNodes(root, '', (node, path) => {
+    if (hasDirectSelfReference || typeof node.$ref !== 'string') return;
+    const target = refTargetPath(node.$ref);
+    if (target !== null && isAncestorPointer(target, path)) hasDirectSelfReference = true;
+  });
+
+  return hasDirectSelfReference || hasCycle(buildDefinitionRefGraph(root));
 }
 
 const UNSUPPORTED_NUMERIC_KEYS = ['minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum', 'multipleOf'];
 
-function hasKeyAnywhere(node, keys) {
-  if (node === null || typeof node !== 'object') return false;
-  if (Array.isArray(node)) return node.some((item) => hasKeyAnywhere(item, keys));
-  if (keys.some((key) => Object.prototype.hasOwnProperty.call(node, key))) return true;
-  return Object.values(node).some((value) => hasKeyAnywhere(value, keys));
+/** True if any visited schema NODE's own direct keys include one of `keys` — never a "properties"/"$defs" map's own key, only a real schema node's. */
+function hasKeywordAnywhere(root, keys) {
+  if (root === null || typeof root !== 'object') return false;
+  let found = false;
+  walkSchemaNodes(root, '', (node) => {
+    if (!found && keys.some((key) => Object.prototype.hasOwnProperty.call(node, key))) found = true;
+  });
+  return found;
 }
 
-/** True if any of Structured Outputs' unsupported numerical bound keywords appear anywhere in the schema. */
+/** True if any of Structured Outputs' unsupported numerical bound keywords appear on any real schema node. */
 export function hasNumericalBoundConstraints(node) {
-  return hasKeyAnywhere(node, UNSUPPORTED_NUMERIC_KEYS);
+  return hasKeywordAnywhere(node, UNSUPPORTED_NUMERIC_KEYS);
 }
 
-/** True if a `pattern` (regex) keyword appears anywhere in the schema. */
+/** True if a `pattern` (regex) keyword appears on any real schema node — never a parameter merely NAMED "pattern". */
 export function hasComplexRegex(node) {
-  return hasKeyAnywhere(node, ['pattern']);
+  return hasKeywordAnywhere(node, ['pattern']);
 }
 
 /**
