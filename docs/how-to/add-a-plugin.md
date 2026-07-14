@@ -74,8 +74,8 @@ a human-readable label.
 }
 ```
 
-> The vendored `claude-artifact-authoring` plugin lives **inside** this repo, so
-> its entry uses a local `"source": "./plugins/claude-artifact-authoring"` path
+> The vendored `artifact-authoring` plugin lives **inside** this repo, so
+> its entry uses a local `"source": "./plugins/artifact-authoring"` path
 > (just the path string, no `git-subdir`/`ref`/`sha` — a local source isn't
 > pinned, since there's no separate repo to pin) rather than the `git-subdir`
 > form. External plugins use the `git-subdir` + `sha` form above; a vendored

@@ -36,7 +36,7 @@ Set the variables once. **Substitute the real tarball filename** for the plugin
 you downloaded.
 
 ```bash
-TARBALL="claude-artifact-authoring-0.1.0.tar.gz"   # the downloaded plugin tarball
+TARBALL="artifact-authoring-0.2.0.tar.gz"   # the downloaded plugin tarball
 REPO="modeled-information-format/claude-code-plugins"
 SEAM="modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml"
 ```

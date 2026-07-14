@@ -56,7 +56,7 @@ pinned `git-subdir`) plus one plugin vendored **inside** this repo:
 ```
 .claude-plugin/marketplace.json   # the catalog (name: "modeled-information-format")
 plugins/
-  claude-artifact-authoring/      # vendored plugin: local-path source, no sha pin
+  artifact-authoring/      # vendored plugin: local-path source, no sha pin
     .claude-plugin/plugin.json
     commands/
     skills/                       # one skill per artifact-authoring pipeline stage
@@ -65,7 +65,7 @@ external_plugins/                 # empty placeholder for future git-subdir + sh
 docs/                             # Diátaxis docs (this README links into them)
 ```
 
-`plugins/claude-artifact-authoring/` exercises attest → scan → verify on real
+`plugins/artifact-authoring/` exercises attest → scan → verify on real
 content so the pipeline is proven on a vendored plugin, not only external ones.
 `external_plugins/` is reserved for future plugins referenced by `git-subdir`
 plus a 40-char `sha` pin. See [Registered plugins](docs/reference/registered-plugins.md)
@@ -78,11 +78,11 @@ Add this marketplace, then install a plugin from it:
 ```bash
 # in Claude Code
 /plugin marketplace add modeled-information-format/claude-code-plugins
-/plugin install claude-artifact-authoring@modeled-information-format
+/plugin install artifact-authoring@modeled-information-format
 ```
 
-`claude-artifact-authoring@modeled-information-format` reads as *plugin
-`claude-artifact-authoring` from the `modeled-information-format` marketplace* —
+`artifact-authoring@modeled-information-format` reads as *plugin
+`artifact-authoring` from the `modeled-information-format` marketplace* —
 the marketplace name, not the repo name.
 
 Before trusting a release, verify it yourself: see
