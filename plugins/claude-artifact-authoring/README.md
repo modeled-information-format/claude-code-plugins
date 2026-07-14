@@ -3,7 +3,7 @@ id: claude-code-plugins-claude-artifact-authoring-readme
 type: semantic
 created: '2026-07-13T00:00:00Z'
 namespace: claude-code-plugins/claude-artifact-authoring
-modified: '2026-07-14T01:49:05.181Z'
+modified: '2026-07-14T02:22:19.460Z'
 temporal:
   '@type': TemporalMetadata
   validFrom: '2026-07-13T00:00:00Z'
@@ -43,12 +43,12 @@ graded, and discoverable across projects rather than one-off files.
 This plugin's design is specified in the architecture doc referenced by
 [Epic #40](https://github.com/modeled-information-format/claude-code-plugins/issues/40),
 which tracks its build via 14 Stories. This README will grow
-generator-by-generator as each Story lands; as of this Story (S7), the plugin
+generator-by-generator as each Story lands; as of this Story (S8), the plugin
 scaffold, the central `XDG_DATA_HOME` artifact store, the cross-cutting
 persistence pipeline, the OTel-compatible trace substrate, the
 calibrated-grading framework (with real golden sets for all 6 artifact
-types), central-corpus discovery indexing, and the first two generators
-(**prompt**, **goal**) exist.
+types), central-corpus discovery indexing, and the first three generators
+(**prompt**, **goal**, **loop**) exist.
 
 ## Internals
 
@@ -179,16 +179,46 @@ types), central-corpus discovery indexing, and the first two generators
   `conceptType: 'semantic'` (Task #78, via
   `ARTIFACT_TYPE_METADATA.goals`), and finishes the same
   grade → persist sequence Story S6 established.
+- `lib/loop-checklist.mjs` — the deterministic subset of the loop
+  generator's authoring checklist (Story S8 Tasks #80/#82): a frozen
+  `LOOP_CHECKLIST` naming all 5 items, with `scoreDeterministicChecklist(content)`
+  mechanically scoring the 2 a plain function can check (`patternNamed` via
+  `extractDeclaredPattern` — recognizing an explicit `Pattern: <name>.`
+  declaration against `SIX_AGENT_PATTERNS`, Anthropic's six named agent
+  patterns — and `explicitStopCondition`, an explicit `Stop condition:`
+  section with real content, not an empty or newline-severed header). Also
+  exports `assertPatternSelectionGrounded` (Task #82: the pattern selection
+  record carries a non-empty rationale, traceable to the
+  Building-Effective-Agents/ReAct evidence the source doc cites).
+- `lib/loop-dry-run.mjs` — Task #85's "sandboxed dry-run harness" made
+  real: `dryRunLoop` actually runs a caller-supplied `step`/`isDone` pair
+  against a scripted mock environment (no real side effects) and reports
+  whether the declared stop condition genuinely fires (`stoppedBy:
+  'condition'` or `'iteration-cap'`) or never does (`ranAway: true`,
+  caught by a hard ceiling independent of anything the loop itself
+  declares) — proving achievability the same way
+  `lib/verify-command-runner.mjs` does for a goal's verify command, not a
+  simulation of a simulation.
+- `skills/generate-loop/SKILL.md` — Story S8's generator: classifies the
+  requested behavior against Anthropic's six named agent patterns, refuses
+  to default to "fully autonomous" without real justification, requires an
+  explicit stop condition, actually dry-runs it via `dryRunLoop` before
+  shipping (Task #85), drafts L3 frontmatter with `conceptType: 'procedural'`
+  (Task #87, via `ARTIFACT_TYPE_METADATA.loops`), and finishes the same
+  grade → persist sequence Stories S6/S7 established.
 - `npm test` (Node's built-in test runner) covers all of the
   above, including a **real cross-process** concurrency test for the store
   (separate OS processes, not same-thread async calls, so it actually
   exercises the `EEXIST`-retry path under real contention), a real
   request → artifact → evaluation trace round-trip, the real initial
   calibration pass across all 6 golden sets, full `persistDraftArtifact`
-  round-trips for both the prompt and goal generators' worked examples, and
+  round-trips for the prompt, goal, and loop generators' worked examples,
   **real subprocess executions** (a genuinely passing, a genuinely failing,
   and a genuinely timed-out reference solution) proving the goal
-  generator's achievability smoke test is a real execution, not simulated.
+  generator's achievability smoke test is a real execution, and **real
+  dry-run executions** (a condition that fires, an iteration cap that
+  fires, and a broken stop condition caught by the hard ceiling) proving
+  the loop generator's dry-run harness is likewise real, not simulated.
 
 ## Install
 
@@ -213,7 +243,7 @@ Epic #40's build order). Once it is:
 | --- | --- | --- |
 | Prompt | S6 (#59) | Done |
 | Goal | S7 (#62) | Done |
-| Loop | S8 (#64) | Not started |
+| Loop | S8 (#64) | Done |
 | Eval-suite | S9 (#68) | Not started |
 | Subagent-definition | S10 (#73) | Not started |
 | Tool-schema | S11 (#77) | Not started |
