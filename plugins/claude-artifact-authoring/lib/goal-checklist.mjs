@@ -153,7 +153,28 @@ export function extractVerifyCommands(content) {
 // variant — an explicit numeric turn/time bound, not any use of the word
 // "stop" (e.g. "do not stop working on this" must not match).
 const STOP_CONDITION_PATTERN = /\bstop\s+(?:after|within)\b[^.]{0,30}?\d+/i;
-const CONSTRAINTS_SECTION_PATTERN = /\bconstraints?\s*:/i;
+// Captures whatever immediately follows a "Constraints:"/"Constraint:"
+// header, up to the next sentence-ending period or newline — a
+// "Constraints:" header alone is not enough to pass this item. An empty
+// header (nothing before the next period/newline) or an explicitly
+// unbounded marker ("none", "n/a", "no constraints") states there is NO
+// bounding constraint and must not be scored as if a real one were present
+// — the exact false positive Copilot flagged on this PR (`Constraints: none`
+// was passing before this fix).
+// Only horizontal whitespace ([ \t], not \s) between the colon and the
+// captured body — \s would cross a newline and let the FOLLOWING sentence
+// (e.g. a stop-condition line right after an empty "Constraints:" header on
+// its own line) get misread as if it were the constraint content itself.
+const CONSTRAINTS_HEADER = /\bconstraints?\s*:[ \t]*([^.\n]*)/i;
+const UNBOUNDED_CONSTRAINTS_BODY = /^(?:none|n\/a|no constraints?)$/i;
+
+function hasBoundedConstraints(text) {
+  const match = text.match(CONSTRAINTS_HEADER);
+  if (!match) return false;
+  const body = match[1].trim();
+  if (!body) return false;
+  return !UNBOUNDED_CONSTRAINTS_BODY.test(body);
+}
 
 /**
  * Score the deterministic subset of `GOAL_CHECKLIST` against a drafted
@@ -172,7 +193,7 @@ export function scoreDeterministicChecklist(content) {
   return {
     measurableVerifyCommand: extractVerifyCommands(text).length > 0,
     timeBound: STOP_CONDITION_PATTERN.test(text),
-    boundedConstraints: CONSTRAINTS_SECTION_PATTERN.test(text),
+    boundedConstraints: hasBoundedConstraints(text),
   };
 }
 

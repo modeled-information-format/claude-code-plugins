@@ -46,12 +46,23 @@ test('golden set good entries pass every deterministic checklist item', () => {
   }
 });
 
-test('golden set bad entries fail every deterministic checklist item', () => {
-  for (const entry of goldenSet.entries.filter((e) => e.label === 'bad')) {
-    const scores = scoreDeterministicChecklist(entry.content);
-    for (const key of DETERMINISTIC_CHECKLIST_KEYS) {
-      assert.equal(scores[key], false, `expected "${entry.id}" to fail "${key}", got ${JSON.stringify(scores)}`);
-    }
+test('golden set bad entries fail the deterministic checklist items applicable to their own content', () => {
+  // Not a blanket "every bad entry must fail every deterministic item" loop
+  // — an entry can be overall "bad" on the judgment-based items (two-experts,
+  // specific/achievable/relevant) while still legitimately satisfying a
+  // deterministic shape check, so asserting all-fail-always would make this
+  // test brittle against future, more varied bad fixtures (mirrors
+  // prompt-checklist.test.mjs's own pattern of only asserting the checks
+  // actually applicable to its specific bad fixtures). Both current bad
+  // entries happen to have zero backticks, zero stop conditions, and zero
+  // constraints, so all three deterministic items are legitimately
+  // applicable and checked here explicitly, by id.
+  const byId = Object.fromEntries(goldenSet.entries.map((e) => [e.id, e]));
+  for (const id of ['bad-make-it-better-goal', 'bad-vague-feature-goal']) {
+    const scores = scoreDeterministicChecklist(byId[id].content);
+    assert.equal(scores.measurableVerifyCommand, false, `expected "${id}" to fail measurableVerifyCommand`);
+    assert.equal(scores.timeBound, false, `expected "${id}" to fail timeBound`);
+    assert.equal(scores.boundedConstraints, false, `expected "${id}" to fail boundedConstraints`);
   }
 });
 
@@ -125,6 +136,20 @@ test('boundedConstraints: matches an explicit "Constraints:" section', () => {
   assert.equal(scoreDeterministicChecklist('Constraints: only touch src/.').boundedConstraints, true);
   assert.equal(scoreDeterministicChecklist('Constraint: no new deps.').boundedConstraints, true);
   assert.equal(scoreDeterministicChecklist('no scope limits stated').boundedConstraints, false);
+});
+
+test('boundedConstraints rejects a header that explicitly states there are no constraints', () => {
+  // Regression: Copilot flagged that a bare "Constraints:" header matched
+  // regardless of content, so "Constraints: none" (explicitly UNbounded)
+  // was wrongly scored as a passing bounding constraint.
+  assert.equal(scoreDeterministicChecklist('Constraints: none.').boundedConstraints, false);
+  assert.equal(scoreDeterministicChecklist('Constraints: n/a.').boundedConstraints, false);
+  assert.equal(scoreDeterministicChecklist('Constraints: no constraints.').boundedConstraints, false);
+});
+
+test('boundedConstraints rejects an empty "Constraints:" header with nothing after it', () => {
+  assert.equal(scoreDeterministicChecklist('Constraints:\nStop after 5 turns.').boundedConstraints, false);
+  assert.equal(scoreDeterministicChecklist('Constraints: .').boundedConstraints, false);
 });
 
 // --- Task #72: per-check grounding ---
