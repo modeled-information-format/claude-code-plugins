@@ -130,6 +130,23 @@ test('explicitStopCondition rejects an unbounded marker, mirroring goal-checklis
   );
 });
 
+test('explicitStopCondition does not truncate a decimal value in the stop condition', () => {
+  // Regression: Copilot flagged that stopping the capture at the first "."
+  // truncated "score >= 0.9" down to just "score >= 0", and a bare
+  // "Stop condition: 0.9" would previously capture only "0" — this must
+  // capture the decimal in full.
+  assert.equal(
+    scoreDeterministicChecklist('Stop condition: score >= 0.9.').explicitStopCondition,
+    true,
+  );
+  assert.equal(scoreDeterministicChecklist('Stop condition: 0.9.').explicitStopCondition, true);
+});
+
+test('explicitStopCondition rejects a punctuation-only body', () => {
+  assert.equal(scoreDeterministicChecklist('Stop condition: .').explicitStopCondition, false);
+  assert.equal(scoreDeterministicChecklist('Stop condition: ,;.').explicitStopCondition, false);
+});
+
 // --- Task #82: pattern-selection grounding ---
 
 test('assertPatternSelectionGrounded passes for a valid pattern with a non-empty rationale', () => {

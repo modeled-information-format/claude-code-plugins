@@ -89,3 +89,40 @@ test('dryRunLoop rejects non-function step/isDone', () => {
   assert.throws(() => dryRunLoop({ step: 'nope', isDone: () => true }), /step must be a function/);
   assert.throws(() => dryRunLoop({ step: () => {}, isDone: 'nope' }), /isDone must be a function/);
 });
+
+test('dryRunLoop rejects a negative, NaN, or non-integer maxIterations rather than silently misbehaving', () => {
+  // Regression: Copilot flagged that a negative maxIterations previously
+  // stopped "by cap" at iteration 0, and NaN/non-integer values were
+  // accepted silently instead of being caught as misconfiguration.
+  const step = () => ({});
+  const isDone = () => false;
+  assert.throws(() => dryRunLoop({ step, isDone, maxIterations: -1 }), /maxIterations must be a non-negative integer/);
+  assert.throws(() => dryRunLoop({ step, isDone, maxIterations: NaN }), /maxIterations must be a non-negative integer/);
+  assert.throws(() => dryRunLoop({ step, isDone, maxIterations: 2.5 }), /maxIterations must be a non-negative integer/);
+});
+
+test('dryRunLoop rejects a non-positive or non-integer hardCeiling', () => {
+  // Regression: a hardCeiling <= 0 previously reported ranAway: true
+  // without the loop ever running, masking a misconfiguration as a real
+  // stop-condition failure.
+  const step = () => ({});
+  const isDone = () => false;
+  assert.throws(() => dryRunLoop({ step, isDone, hardCeiling: 0 }), /hardCeiling must be a positive integer/);
+  assert.throws(() => dryRunLoop({ step, isDone, hardCeiling: -5 }), /hardCeiling must be a positive integer/);
+  assert.throws(() => dryRunLoop({ step, isDone, hardCeiling: 3.5 }), /hardCeiling must be a positive integer/);
+});
+
+test('dryRunLoop accepts maxIterations: 0 as a legitimate "never step" declaration', () => {
+  let stepCalled = false;
+  const result = dryRunLoop({
+    step: () => {
+      stepCalled = true;
+      return {};
+    },
+    isDone: () => false,
+    maxIterations: 0,
+  });
+  assert.equal(result.stoppedBy, 'iteration-cap');
+  assert.equal(result.iterations, 0);
+  assert.equal(stepCalled, false);
+});

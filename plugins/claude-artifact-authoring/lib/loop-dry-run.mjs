@@ -55,6 +55,17 @@ const DEFAULT_HARD_CEILING_MINIMUM = 20;
 export function dryRunLoop({ step, isDone, maxIterations, hardCeiling }) {
   if (typeof step !== 'function') throw new Error('dryRunLoop: step must be a function.');
   if (typeof isDone !== 'function') throw new Error('dryRunLoop: isDone must be a function.');
+  // A negative/NaN/non-integer maxIterations or hardCeiling produces
+  // surprising, silently-wrong results (e.g. a negative maxIterations
+  // stopping "by cap" at iteration 0; a hardCeiling <= 0 reporting
+  // ranAway: true without ever running) rather than a caught
+  // misconfiguration — reject both up front instead.
+  if (maxIterations !== undefined && !(Number.isInteger(maxIterations) && maxIterations >= 0)) {
+    throw new Error(`dryRunLoop: maxIterations must be a non-negative integer, got ${JSON.stringify(maxIterations)}.`);
+  }
+  if (hardCeiling !== undefined && !(Number.isInteger(hardCeiling) && hardCeiling > 0)) {
+    throw new Error(`dryRunLoop: hardCeiling must be a positive integer, got ${JSON.stringify(hardCeiling)}.`);
+  }
 
   const ceiling =
     hardCeiling ??

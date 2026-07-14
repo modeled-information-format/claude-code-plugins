@@ -83,15 +83,21 @@ export function extractDeclaredPattern(content) {
 // "Stop condition:" header alone (or one immediately followed by an
 // unrelated new sentence on the next line, or one explicitly stating there
 // is no real condition, e.g. "Stop condition: none") is not itself a
-// declared condition.
-const STOP_CONDITION_HEADER = /\bstop\s+condition\s*:[ \t]*([^.\n]*)/i;
-const UNBOUNDED_STOP_CONDITION_BODY = /^(?:none|n\/a|no stop condition)$/i;
+// declared condition. Captures to end-of-LINE (not stopping at the first
+// "."), unlike an earlier version that truncated at any period — that
+// wrongly cut off common stop conditions containing a decimal (e.g.
+// "score >= 0.9") after just the digit before the point. Punctuation-only
+// content (e.g. a bare "." left over from "Stop condition: .") is rejected
+// by the trailing-punctuation strip below, not by an early truncation.
+const STOP_CONDITION_HEADER = /\bstop\s+condition\s*:[ \t]*([^\n]*)/i;
+const UNBOUNDED_STOP_CONDITION_BODY = /^(?:none|n\/a|no stop condition)\.?$/i;
+const PUNCTUATION_ONLY = /^[.,;:!?]*$/;
 
 function hasExplicitStopCondition(text) {
   const match = text.match(STOP_CONDITION_HEADER);
   if (!match) return false;
   const body = match[1].trim();
-  if (!body) return false;
+  if (!body || PUNCTUATION_ONLY.test(body)) return false;
   return !UNBOUNDED_STOP_CONDITION_BODY.test(body);
 }
 
