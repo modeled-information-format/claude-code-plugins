@@ -152,6 +152,50 @@ test('boundedConstraints rejects an empty "Constraints:" header with nothing aft
   assert.equal(scoreDeterministicChecklist('Constraints: .').boundedConstraints, false);
 });
 
+test('boundedConstraints does not truncate a decimal value in the constraint', () => {
+  // Regression: Copilot flagged the identical truncation bug on
+  // lib/loop-checklist.mjs's analogous STOP_CONDITION_HEADER (Story S8,
+  // PR #110) — stopping the capture at the first "." cut a decimal
+  // constraint like "under 0.5GB" down to "under 0". Fixed here the same
+  // way: capture to end-of-line, reject punctuation-only bodies instead.
+  assert.equal(
+    scoreDeterministicChecklist('Constraints: keep memory under 0.5GB.').boundedConstraints,
+    true,
+  );
+  assert.equal(scoreDeterministicChecklist('Constraints: 0.5.').boundedConstraints, true);
+});
+
+test('boundedConstraints: a leading-decimal constraint actually distinguishes the fix from the prior truncating capture', () => {
+  // Copilot correctly flagged that the two cases above would ALSO pass
+  // under the old, truncating `[^.\n]*` capture (both leave a non-empty
+  // prefix before the first "."), so neither proved the fix. A body that
+  // STARTS with the decimal point (no leading digit before it) is the case
+  // that actually differentiates: the old capture stopped at that very
+  // first "." and produced an EMPTY body (wrongly scoring false), while the
+  // fixed end-of-line capture correctly sees the full, non-empty content.
+  assert.equal(scoreDeterministicChecklist('Constraints: .5GB max.').boundedConstraints, true);
+});
+
+test('boundedConstraints rejects a punctuation-only body', () => {
+  assert.equal(scoreDeterministicChecklist('Constraints: ,;.').boundedConstraints, false);
+});
+
+test('boundedConstraints still rejects an unbounded marker followed by unrelated trailing text on the same line', () => {
+  // Regression found while reviewing this fix: widening the capture to
+  // end-of-line (to preserve decimals) means the full body no longer
+  // exactly equals "none" once trailing text is appended, so the
+  // unbounded-marker check must be scoped to just the leading clause
+  // rather than the whole widened capture.
+  assert.equal(
+    scoreDeterministicChecklist('Constraints: none. Stop after 5 minutes.').boundedConstraints,
+    false,
+  );
+  assert.equal(
+    scoreDeterministicChecklist('Constraints: n/a. Nothing else to add.').boundedConstraints,
+    false,
+  );
+});
+
 // --- Task #72: per-check grounding ---
 
 test('assertChecksGrounded passes when every check has a non-empty groundedIn', () => {

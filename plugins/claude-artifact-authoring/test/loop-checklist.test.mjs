@@ -142,9 +142,30 @@ test('explicitStopCondition does not truncate a decimal value in the stop condit
   assert.equal(scoreDeterministicChecklist('Stop condition: 0.9.').explicitStopCondition, true);
 });
 
+test('explicitStopCondition: a leading-decimal stop condition actually distinguishes the fix from the prior truncating capture', () => {
+  // The two cases above would ALSO pass under the old, truncating
+  // `[^.\n]*` capture (both leave a non-empty prefix before the first
+  // "."), so neither proved the fix (same gap Copilot flagged on
+  // lib/goal-checklist.mjs's analogous test). A body that STARTS with the
+  // decimal point differentiates: the old capture produced an EMPTY body
+  // there (wrongly scoring false), the fixed capture sees the full content.
+  assert.equal(scoreDeterministicChecklist('Stop condition: .9 or higher.').explicitStopCondition, true);
+});
+
 test('explicitStopCondition rejects a punctuation-only body', () => {
   assert.equal(scoreDeterministicChecklist('Stop condition: .').explicitStopCondition, false);
   assert.equal(scoreDeterministicChecklist('Stop condition: ,;.').explicitStopCondition, false);
+});
+
+test('explicitStopCondition still rejects an unbounded marker followed by unrelated trailing text on the same line', () => {
+  // Same regression class as lib/goal-checklist.mjs's boundedConstraints:
+  // widening the capture to end-of-line means the full body no longer
+  // exactly equals "none" once trailing text is appended, so the
+  // unbounded-marker check is scoped to just the leading clause.
+  assert.equal(
+    scoreDeterministicChecklist('Stop condition: none. Actually keep going forever.').explicitStopCondition,
+    false,
+  );
 });
 
 // --- Task #82: pattern-selection grounding ---

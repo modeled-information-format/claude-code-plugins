@@ -89,8 +89,17 @@ export function extractDeclaredPattern(content) {
 // "score >= 0.9") after just the digit before the point. Punctuation-only
 // content (e.g. a bare "." left over from "Stop condition: .") is rejected
 // by the trailing-punctuation strip below, not by an early truncation.
+//
+// The emptiness/punctuation-only check runs against the FULL captured
+// body (so a decimal like "0.9" is correctly seen as non-empty), but the
+// unbounded-marker check runs against only its FIRST clause (up to the
+// first same-line period) — matching the marker against the full body
+// would let "Stop condition: none. Actually keep going forever." wrongly
+// pass as bounded, since the exactly-anchored marker no longer matches
+// once unrelated trailing text is appended by the wider end-of-line
+// capture (mirrors lib/goal-checklist.mjs's identical fix).
 const STOP_CONDITION_HEADER = /\bstop\s+condition\s*:[ \t]*([^\n]*)/i;
-const UNBOUNDED_STOP_CONDITION_BODY = /^(?:none|n\/a|no stop condition)\.?$/i;
+const UNBOUNDED_STOP_CONDITION_BODY = /^(?:none|n\/a|no stop condition)$/i;
 const PUNCTUATION_ONLY = /^[.,;:!?]*$/;
 
 function hasExplicitStopCondition(text) {
@@ -98,7 +107,8 @@ function hasExplicitStopCondition(text) {
   if (!match) return false;
   const body = match[1].trim();
   if (!body || PUNCTUATION_ONLY.test(body)) return false;
-  return !UNBOUNDED_STOP_CONDITION_BODY.test(body);
+  const firstClause = body.split('.')[0].trim();
+  return !UNBOUNDED_STOP_CONDITION_BODY.test(firstClause);
 }
 
 /**
