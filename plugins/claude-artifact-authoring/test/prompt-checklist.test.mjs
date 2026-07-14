@@ -77,6 +77,18 @@ test('fewShotExamples: example-count boundary — 2 fails, 3 passes, 5 passes, 6
   assert.equal(scoreDeterministicChecklist(exampleBlocks(0)).fewShotExamples, false);
 });
 
+test('fewShotExamples is case-insensitive and tolerates attributes on the opening tag', () => {
+  const three = Array.from(
+    { length: 3 },
+    (_, i) => `<Example id="${i}">\n<diff>+ line ${i}</diff>\n</Example>`,
+  ).join('\n');
+  assert.equal(
+    scoreDeterministicChecklist(three).fewShotExamples,
+    true,
+    'capitalized <Example> tags and an id attribute must not count as zero examples',
+  );
+});
+
 test('xmlDelimiting: needs at least 2 distinct properly-paired tag names beyond <example>', () => {
   assert.equal(scoreDeterministicChecklist('no tags here at all').xmlDelimiting, false);
   assert.equal(
@@ -175,6 +187,26 @@ test('tieredChainOfThought tag mentions are matched case-insensitively', () => {
   assert.equal(
     scoreDeterministicChecklist('use <Thinking> then <Answer> tags.').tieredChainOfThought,
     true,
+  );
+});
+
+test('tieredChainOfThought requires equal opening counts, not just presence of both tags', () => {
+  // A prompt opening <thinking> three times but <answer> only once is a
+  // genuinely broken/incomplete tiering — presence-only matching would
+  // wrongly pass this, since both tag names technically appear.
+  assert.equal(
+    scoreDeterministicChecklist(
+      '<thinking>a</thinking><thinking>b</thinking><thinking>c</thinking><answer>only one</answer>',
+    ).tieredChainOfThought,
+    false,
+    'mismatched opening counts (3 thinking vs 1 answer) must fail, not pass on mere presence',
+  );
+  assert.equal(
+    scoreDeterministicChecklist(
+      '<thinking>a</thinking><answer>1</answer><thinking>b</thinking><answer>2</answer>',
+    ).tieredChainOfThought,
+    true,
+    'equal counts above one (2 thinking, 2 answer) pass — a legitimate repeated-tiering pattern',
   );
 });
 

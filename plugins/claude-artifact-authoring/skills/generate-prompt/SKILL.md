@@ -56,13 +56,16 @@ three a function can check. Never silently skip an item.
      with no long-context document input at all, this item is not
      applicable — record it as such explicitly (see step 3), never as a
      silent omission.
-3. Record every one of the eight items' verdict explicitly — e.g.
+3. Record every one of the eight items' verdict explicitly, as the same
+   `'pass' | 'fail' | 'n/a'` string enum throughout — including the three
+   deterministic items (`scoreDeterministicChecklist`'s raw `true`/`false`
+   converts to `'pass'`/`'fail'` here, never left as a bare boolean) — e.g.
    `{ clarityGoldenRule: 'pass', contextualJustification: 'pass',
-   fewShotExamples: true, xmlDelimiting: true, roleSetting: 'pass',
-   tieredChainOfThought: true, rightAltitude: 'pass', documentGrounding:
-   'n/a' }`. This record is what Provenance step 2 below persists — Task
-   #69's "record each checklist item as an explicit pass or fail" is not
-   satisfied by scoring silently and only shipping the final artifact.
+   fewShotExamples: 'pass', xmlDelimiting: 'pass', roleSetting: 'pass',
+   tieredChainOfThought: 'pass', rightAltitude: 'pass', documentGrounding:
+   'n/a' }`. This record is what Provenance step 2 below persists verbatim
+   — Task #69's "record each checklist item as an explicit pass or fail" is
+   not satisfied by scoring silently and only shipping the final artifact.
 4. **Feedback loop.** If any applicable item fails, revise the draft and
    re-score from step 1 — this is the architecture doc's own
    `JUDGE -->|fail| CK` loop, applied at the checklist stage rather than

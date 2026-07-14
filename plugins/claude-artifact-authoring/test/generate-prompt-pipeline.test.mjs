@@ -186,7 +186,7 @@ test('full persistDraftArtifact round-trip for the worked example, promoted afte
   }
 });
 
-test('persistDraftArtifact rejects the worked example if the checklist extensions block is malformed but a required element is dropped', () => {
+test('persistDraftArtifact rejects the worked example when a required element is dropped, even with a well-formed extensions block present', () => {
   // extensions is additive and never validated by the contract itself
   // (mif's schema treats it as open provider-specific data) — this proves
   // that dropping a REQUIRED element still fails even with a fully-formed
