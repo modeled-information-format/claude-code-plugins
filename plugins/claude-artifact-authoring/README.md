@@ -3,7 +3,7 @@ id: claude-code-plugins-claude-artifact-authoring-readme
 type: semantic
 created: '2026-07-13T00:00:00Z'
 namespace: claude-code-plugins/claude-artifact-authoring
-modified: '2026-07-14T02:22:19.460Z'
+modified: '2026-07-14T03:26:43.719Z'
 temporal:
   '@type': TemporalMetadata
   validFrom: '2026-07-13T00:00:00Z'
@@ -43,12 +43,12 @@ graded, and discoverable across projects rather than one-off files.
 This plugin's design is specified in the architecture doc referenced by
 [Epic #40](https://github.com/modeled-information-format/claude-code-plugins/issues/40),
 which tracks its build via 14 Stories. This README will grow
-generator-by-generator as each Story lands; as of this Story (S8), the plugin
+generator-by-generator as each Story lands; as of this Story (S9), the plugin
 scaffold, the central `XDG_DATA_HOME` artifact store, the cross-cutting
 persistence pipeline, the OTel-compatible trace substrate, the
 calibrated-grading framework (with real golden sets for all 6 artifact
-types), central-corpus discovery indexing, and the first three generators
-(**prompt**, **goal**, **loop**) exist.
+types), central-corpus discovery indexing, and the first four generators
+(**prompt**, **goal**, **loop**, **eval-suite**) exist.
 
 ## Internals
 
@@ -206,19 +206,48 @@ types), central-corpus discovery indexing, and the first three generators
   shipping (Task #85), drafts L3 frontmatter with `conceptType: 'procedural'`
   (Task #87, via `ARTIFACT_TYPE_METADATA.loops`), and finishes the same
   grade → persist sequence Stories S6/S7 established.
+- `lib/eval-suite-checklist.mjs` — the deterministic subset of the
+  eval-suite generator's authoring checklist (Story S9 Task #76): a frozen
+  `EVAL_SUITE_CHECKLIST` naming all 5 items, with
+  `scoreDeterministicChecklist(content)` mechanically scoring the 3 a plain
+  function can check (`graderTypeNamed` via `extractGraderType` against
+  `GRADER_TYPES` — Anthropic's three documented grader types —
+  `hasGoldenSetReference`, and `calibrationRequiredForLLMGraders`, vacuously
+  true for a non-LLM-based grader and requiring actual calibration language
+  otherwise).
+- `lib/eval-suite-calibration-wiring.mjs` — Tasks #79/#81's calibration
+  cadence made real: `assertEvalSuiteCalibrationWired` wires a generated
+  eval suite into `lib/calibration.mjs`'s EXISTING
+  `isCalibrated`/`needsRecalibration` machinery for the artifact type the
+  suite grades, rather than reinventing calibration tracking — an
+  LLM-based suite with no recorded run, or a stale one, is rejected before
+  it ships; a code-based or human grader is exempt (no LLM-judge drift to
+  calibrate against).
+- `skills/generate-eval-suite/SKILL.md` — Story S9's generator: unlike the
+  other five, its own product IS a grader for some other target artifact
+  type. Names the grader type, grades the target artifact rather than the
+  path taken to reach it, names a concrete golden set, wires an LLM-based
+  suite into the real calibration cadence before shipping (Tasks #79/#81),
+  drafts L3 frontmatter with `conceptType: 'semantic'` (Task #84, via
+  `ARTIFACT_TYPE_METADATA['eval-suites']`), and finishes the same
+  grade → persist sequence Stories S6-S8 established.
 - `npm test` (Node's built-in test runner) covers all of the
   above, including a **real cross-process** concurrency test for the store
   (separate OS processes, not same-thread async calls, so it actually
   exercises the `EEXIST`-retry path under real contention), a real
   request → artifact → evaluation trace round-trip, the real initial
   calibration pass across all 6 golden sets, full `persistDraftArtifact`
-  round-trips for the prompt, goal, and loop generators' worked examples,
-  **real subprocess executions** (a genuinely passing, a genuinely failing,
-  and a genuinely timed-out reference solution) proving the goal
-  generator's achievability smoke test is a real execution, and **real
-  dry-run executions** (a condition that fires, an iteration cap that
-  fires, and a broken stop condition caught by the hard ceiling) proving
-  the loop generator's dry-run harness is likewise real, not simulated.
+  round-trips for the prompt, goal, loop, and eval-suite generators'
+  worked examples, **real subprocess executions** (a genuinely passing, a
+  genuinely failing, and a genuinely timed-out reference solution) proving
+  the goal generator's achievability smoke test is a real execution,
+  **real dry-run executions** (a condition that fires, an iteration cap
+  that fires, and a broken stop condition caught by the hard ceiling)
+  proving the loop generator's dry-run harness is likewise real, and
+  **real calibration-log exercises** (no run recorded, a below-target run,
+  a stale run, and a genuinely passing fresh run) proving the eval-suite
+  generator's calibration-cadence wiring checks an actual recorded run,
+  not a documented assumption.
 
 ## Install
 
@@ -244,6 +273,6 @@ Epic #40's build order). Once it is:
 | Prompt | S6 (#59) | Done |
 | Goal | S7 (#62) | Done |
 | Loop | S8 (#64) | Done |
-| Eval-suite | S9 (#68) | Not started |
+| Eval-suite | S9 (#68) | Done |
 | Subagent-definition | S10 (#73) | Not started |
 | Tool-schema | S11 (#77) | Not started |
