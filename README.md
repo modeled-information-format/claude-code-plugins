@@ -7,9 +7,12 @@
 
 An **attested Claude Code plugin marketplace**. Every plugin in this catalog —
 and every constituent it ships (commands, agents, skills, hooks, bundled MCP
-servers) — is SHA-pinned, scanned across the org's quality gates, signed, and
-attested. A plugin's SHA enters the catalog only when its attestations verify
-fail-closed in CI.
+servers) — is scanned across the org's quality gates, signed, and attested.
+Every **external** plugin (sourced via `github` or `git-subdir`) is additionally
+SHA-pinned, and its SHA enters the catalog only when its attestations verify
+fail-closed in CI. A **vendored, local-path** plugin (one that lives inside
+this repo) has no separate source to pin, since it's already version-controlled
+alongside the catalog itself — it still passes the same scanning/signing gates.
 
 > The repository is named `claude-code-plugins`, but the marketplace `name` field
 > in `.claude-plugin/marketplace.json` is **`modeled-information-format`**.
