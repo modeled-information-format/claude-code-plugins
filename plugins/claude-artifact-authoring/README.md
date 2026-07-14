@@ -3,7 +3,7 @@ id: claude-code-plugins-claude-artifact-authoring-readme
 type: semantic
 created: '2026-07-13T00:00:00Z'
 namespace: claude-code-plugins/claude-artifact-authoring
-modified: '2026-07-14T03:26:43.719Z'
+modified: '2026-07-14T03:54:17.393Z'
 temporal:
   '@type': TemporalMetadata
   validFrom: '2026-07-13T00:00:00Z'
@@ -43,12 +43,13 @@ graded, and discoverable across projects rather than one-off files.
 This plugin's design is specified in the architecture doc referenced by
 [Epic #40](https://github.com/modeled-information-format/claude-code-plugins/issues/40),
 which tracks its build via 14 Stories. This README will grow
-generator-by-generator as each Story lands; as of this Story (S9), the plugin
-scaffold, the central `XDG_DATA_HOME` artifact store, the cross-cutting
-persistence pipeline, the OTel-compatible trace substrate, the
-calibrated-grading framework (with real golden sets for all 6 artifact
-types), central-corpus discovery indexing, and the first four generators
-(**prompt**, **goal**, **loop**, **eval-suite**) exist.
+generator-by-generator as each Story lands; as of this Story (S10), the
+plugin scaffold, the central `XDG_DATA_HOME` artifact store, the
+cross-cutting persistence pipeline, the OTel-compatible trace substrate,
+the calibrated-grading framework (with real golden sets for all 6 artifact
+types), central-corpus discovery indexing, and the first five generators
+(**prompt**, **goal**, **loop**, **eval-suite**, **subagent-definition**)
+exist.
 
 ## Internals
 
@@ -231,23 +232,51 @@ types), central-corpus discovery indexing, and the first four generators
   drafts L3 frontmatter with `conceptType: 'semantic'` (Task #84, via
   `ARTIFACT_TYPE_METADATA['eval-suites']`), and finishes the same
   grade → persist sequence Stories S6-S8 established.
+- `lib/subagent-checklist.mjs` — the deterministic subset of the subagent
+  generator's authoring checklist (Story S10 Tasks #88/#90): a frozen
+  `SUBAGENT_CHECKLIST` naming all 5 items, with
+  `scoreDeterministicChecklist(content)` mechanically scoring the 3 a
+  plain function can check by parsing the frontmatter block
+  (`hasFrontmatterFields` — name/description/tools all present —
+  `descriptionStatesBoundary`, and `descriptionStatesTrigger`). Also
+  exports `assertSubagentProvenanceRecorded` (Task #90: names the parent
+  skill/command and, optionally, the tool-schema artifacts depended on —
+  `dependsOnToolSchemas: []` is valid, Story S11 is a soft dependency).
+- `lib/subagent-delegation-harness.mjs` — Task #92's "prove correct
+  delegation, not just correct output" made real: `scoreDelegationCases`
+  scores a real decision function (the invoking agent's own delegation
+  judgment) against hit-and-miss test cases, and `assertTestsBoundary`
+  rejects a suite that only tests hits or only misses — a description's
+  BOUNDARY is what actually prevents mis-delegation, so a one-sided suite
+  never really tests it.
+- `skills/generate-subagent/SKILL.md` — Story S10's generator: applies
+  Story S6's full structured-prompting checklist to the system prompt,
+  separately validates the frontmatter contract (sharply scoped tools,
+  a description stating both a trigger and a boundary), constructs a real
+  hit-and-miss delegation suite before shipping (Task #92), drafts L3
+  frontmatter with `conceptType: 'procedural'` (Task #94, via
+  `ARTIFACT_TYPE_METADATA.subagents`), and finishes the same grade →
+  persist sequence Stories S6-S9 established.
 - `npm test` (Node's built-in test runner) covers all of the
   above, including a **real cross-process** concurrency test for the store
   (separate OS processes, not same-thread async calls, so it actually
   exercises the `EEXIST`-retry path under real contention), a real
   request → artifact → evaluation trace round-trip, the real initial
   calibration pass across all 6 golden sets, full `persistDraftArtifact`
-  round-trips for the prompt, goal, loop, and eval-suite generators'
-  worked examples, **real subprocess executions** (a genuinely passing, a
-  genuinely failing, and a genuinely timed-out reference solution) proving
-  the goal generator's achievability smoke test is a real execution,
-  **real dry-run executions** (a condition that fires, an iteration cap
-  that fires, and a broken stop condition caught by the hard ceiling)
-  proving the loop generator's dry-run harness is likewise real, and
-  **real calibration-log exercises** (no run recorded, a below-target run,
-  a stale run, and a genuinely passing fresh run) proving the eval-suite
-  generator's calibration-cadence wiring checks an actual recorded run,
-  not a documented assumption.
+  round-trips for the prompt, goal, loop, eval-suite, and subagent
+  generators' worked examples, **real subprocess executions** (a
+  genuinely passing, a genuinely failing, and a genuinely timed-out
+  reference solution) proving the goal generator's achievability smoke
+  test is a real execution, **real dry-run executions** (a condition that
+  fires, an iteration cap that fires, and a broken stop condition caught
+  by the hard ceiling) proving the loop generator's dry-run harness is
+  likewise real, **real calibration-log exercises** (no run recorded, a
+  below-target run, a stale run, and a genuinely passing fresh run)
+  proving the eval-suite generator's calibration-cadence wiring checks an
+  actual recorded run, and **real delegation-scoring exercises** (a
+  perfect decision function, and a genuinely broken "always delegate" one
+  caught by the harness) proving the subagent generator's delegation eval
+  is a real scored execution, not a documented assumption.
 
 ## Install
 
@@ -274,5 +303,5 @@ Epic #40's build order). Once it is:
 | Goal | S7 (#62) | Done |
 | Loop | S8 (#64) | Done |
 | Eval-suite | S9 (#68) | Done |
-| Subagent-definition | S10 (#73) | Not started |
+| Subagent-definition | S10 (#73) | Done |
 | Tool-schema | S11 (#77) | Not started |
