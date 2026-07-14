@@ -188,6 +188,7 @@ test('full persistDraftArtifact round-trip for the worked example, promoted afte
 });
 
 test('Task #91: a dependent artifact resolves a real pin against the worked example once it is promoted', () => {
+  assert.ok(WORKED_EXAMPLE, 'golden-sets/tool-schemas.json must carry the "good-flat-search-tool-schema" entry');
   const root = tempStoreRoot();
   const configDir = tempConfigDirWithMifDocs();
   try {
