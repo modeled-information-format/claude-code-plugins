@@ -1,6 +1,18 @@
 ---
+id: reference-gates
+type: semantic
+created: '2026-06-29T18:50:34-04:00'
 title: Gates reference
 diataxis_type: reference
+provenance:
+  '@type': Provenance
+  agent: claude-code/claude-sonnet-5
+  wasGeneratedBy:
+    '@id': urn:mif:activity:claude-code-session:0cbc1511-6559-422f-9909-b895e058b431
+    '@type': prov:Activity
+  trustLevel: user_stated
+  agentVersion: 2.1.209
+modified: '2026-07-14T12:39:16.444Z'
 ---
 # Gates reference
 
