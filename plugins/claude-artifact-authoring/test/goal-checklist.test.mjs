@@ -165,6 +165,17 @@ test('boundedConstraints does not truncate a decimal value in the constraint', (
   assert.equal(scoreDeterministicChecklist('Constraints: 0.5.').boundedConstraints, true);
 });
 
+test('boundedConstraints: a leading-decimal constraint actually distinguishes the fix from the prior truncating capture', () => {
+  // Copilot correctly flagged that the two cases above would ALSO pass
+  // under the old, truncating `[^.\n]*` capture (both leave a non-empty
+  // prefix before the first "."), so neither proved the fix. A body that
+  // STARTS with the decimal point (no leading digit before it) is the case
+  // that actually differentiates: the old capture stopped at that very
+  // first "." and produced an EMPTY body (wrongly scoring false), while the
+  // fixed end-of-line capture correctly sees the full, non-empty content.
+  assert.equal(scoreDeterministicChecklist('Constraints: .5GB max.').boundedConstraints, true);
+});
+
 test('boundedConstraints rejects a punctuation-only body', () => {
   assert.equal(scoreDeterministicChecklist('Constraints: ,;.').boundedConstraints, false);
 });
