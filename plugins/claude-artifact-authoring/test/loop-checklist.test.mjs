@@ -147,6 +147,17 @@ test('explicitStopCondition rejects a punctuation-only body', () => {
   assert.equal(scoreDeterministicChecklist('Stop condition: ,;.').explicitStopCondition, false);
 });
 
+test('explicitStopCondition still rejects an unbounded marker followed by unrelated trailing text on the same line', () => {
+  // Same regression class as lib/goal-checklist.mjs's boundedConstraints:
+  // widening the capture to end-of-line means the full body no longer
+  // exactly equals "none" once trailing text is appended, so the
+  // unbounded-marker check is scoped to just the leading clause.
+  assert.equal(
+    scoreDeterministicChecklist('Stop condition: none. Actually keep going forever.').explicitStopCondition,
+    false,
+  );
+});
+
 // --- Task #82: pattern-selection grounding ---
 
 test('assertPatternSelectionGrounded passes for a valid pattern with a non-empty rationale', () => {

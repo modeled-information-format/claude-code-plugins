@@ -172,8 +172,20 @@ const STOP_CONDITION_PATTERN = /\bstop\s+(?:after|within)\b[^.]{0,30}?\d+/i;
 // wrongly cut a decimal constraint like "keep memory under 0.5GB" down to
 // "keep memory under 0". Punctuation-only content is rejected by the
 // trailing-punctuation check below instead of an early truncation.
+//
+// The emptiness/punctuation-only check runs against the FULL captured
+// body (so a decimal like "0.9" is correctly seen as non-empty content),
+// but the unbounded-marker check runs against only its FIRST clause (up to
+// the first same-line period) — checking the marker against the full body
+// would let "Constraints: none. Stop after 5 minutes." wrongly pass as
+// bounded, since the exactly-anchored marker regex no longer matches once
+// unrelated trailing text is appended by the wider end-of-line capture.
+// Splitting off just the leading clause restores the "none. <anything
+// else>" rejection this module already handles for "Constraints: none."
+// alone, without reintroducing the decimal-truncation bug the emptiness
+// check would otherwise have if it used the same truncated string.
 const CONSTRAINTS_HEADER = /\bconstraints?\s*:[ \t]*([^\n]*)/i;
-const UNBOUNDED_CONSTRAINTS_BODY = /^(?:none|n\/a|no constraints?)\.?$/i;
+const UNBOUNDED_CONSTRAINTS_BODY = /^(?:none|n\/a|no constraints?)$/i;
 const CONSTRAINTS_PUNCTUATION_ONLY = /^[.,;:!?]*$/;
 
 function hasBoundedConstraints(text) {
@@ -181,7 +193,8 @@ function hasBoundedConstraints(text) {
   if (!match) return false;
   const body = match[1].trim();
   if (!body || CONSTRAINTS_PUNCTUATION_ONLY.test(body)) return false;
-  return !UNBOUNDED_CONSTRAINTS_BODY.test(body);
+  const firstClause = body.split('.')[0].trim();
+  return !UNBOUNDED_CONSTRAINTS_BODY.test(firstClause);
 }
 
 /**

@@ -169,6 +169,22 @@ test('boundedConstraints rejects a punctuation-only body', () => {
   assert.equal(scoreDeterministicChecklist('Constraints: ,;.').boundedConstraints, false);
 });
 
+test('boundedConstraints still rejects an unbounded marker followed by unrelated trailing text on the same line', () => {
+  // Regression found while reviewing this fix: widening the capture to
+  // end-of-line (to preserve decimals) means the full body no longer
+  // exactly equals "none" once trailing text is appended, so the
+  // unbounded-marker check must be scoped to just the leading clause
+  // rather than the whole widened capture.
+  assert.equal(
+    scoreDeterministicChecklist('Constraints: none. Stop after 5 minutes.').boundedConstraints,
+    false,
+  );
+  assert.equal(
+    scoreDeterministicChecklist('Constraints: n/a. Nothing else to add.').boundedConstraints,
+    false,
+  );
+});
+
 // --- Task #72: per-check grounding ---
 
 test('assertChecksGrounded passes when every check has a non-empty groundedIn', () => {
