@@ -1,6 +1,18 @@
 ---
+id: security-verify-a-release
+type: procedural
+created: '2026-07-14T00:00:00Z'
 title: Verify a release
 diataxis_type: how-to
+provenance:
+  '@type': Provenance
+  agent: claude-code/claude-sonnet-5
+  wasGeneratedBy:
+    '@id': urn:mif:activity:claude-code-session:3921fa8c-0b9e-410e-b53c-6cf81b074757
+    '@type': prov:Activity
+  trustLevel: user_stated
+  agentVersion: 2.1.208
+modified: '2026-07-14T05:24:40.577Z'
 ---
 # Verify a release
 
@@ -24,7 +36,7 @@ Set the variables once. **Substitute the real tarball filename** for the plugin
 you downloaded.
 
 ```bash
-TARBALL="attested-reference-0.1.0.tar.gz"   # the downloaded plugin tarball
+TARBALL="claude-artifact-authoring-0.1.0.tar.gz"   # the downloaded plugin tarball
 REPO="modeled-information-format/claude-code-plugins"
 SEAM="modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml"
 ```

@@ -56,6 +56,24 @@
         "ci-cd",
         "release-signing"
       ]
+    },
+    {
+      "name": "claude-artifact-authoring",
+      "source": "./plugins/claude-artifact-authoring",
+      "description": "Generates high-quality AI-interaction artifacts (prompts, goals, loops, eval-suites, subagent definitions, tool schemas) from a request plus grounding sources, each with a scored checklist, calibrated eval, and MIF Level-3 provenance.",
+      "author": {
+        "name": "modeled-information-format"
+      },
+      "category": "development",
+      "license": "MIT",
+      "keywords": [
+        "prompt-engineering",
+        "eval",
+        "provenance",
+        "mif",
+        "agent-authoring",
+        "structured-outputs"
+      ]
     }
   ]
 }
