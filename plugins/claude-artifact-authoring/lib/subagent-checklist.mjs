@@ -71,16 +71,68 @@ function hasFrontmatterFields(text) {
   return /^name:/m.test(block) && /^description:/m.test(block) && /^tools:/m.test(block);
 }
 
-/** The frontmatter's `description:` field value (single-line), or '' if absent. */
+// A YAML block-scalar indicator ("|", ">", with optional chomping/
+// indentation modifiers like "|-", ">+", ">4") on the description: line
+// itself — the real content lives on the following, more-indented lines,
+// not on this line.
+const BLOCK_SCALAR_INDICATOR = /^[|>][-+0-9]*$/;
+
+/**
+ * The frontmatter's `description:` field value, reconstructed across
+ * lines when written as a YAML block scalar (`description: |` / `>`,
+ * content indented on following lines) — not just the same-line text. A
+ * single-line description (the convention every entry in
+ * golden-sets/subagents.json uses) is returned unchanged; this only adds
+ * handling for the multi-line case, which an earlier version silently
+ * truncated to the bare block-scalar indicator, scoring a well-written
+ * multi-line description as if it stated neither a trigger nor a boundary.
+ * Returns '' if no description field is present at all.
+ */
 export function extractDescriptionValue(text) {
   const block = extractFrontmatterBlock(text);
   if (!block) return '';
-  const match = block.match(/^description:\s*(.*)$/m);
-  return match ? match[1] : '';
+  const lines = block.split('\n');
+  const startIndex = lines.findIndex((line) => /^description:/.test(line));
+  if (startIndex === -1) return '';
+
+  const firstLine = lines[startIndex].replace(/^description:\s*/, '');
+  const parts = BLOCK_SCALAR_INDICATOR.test(firstLine.trim()) ? [] : [firstLine];
+
+  for (let i = startIndex + 1; i < lines.length; i += 1) {
+    if (/^\s+\S/.test(lines[i])) {
+      parts.push(lines[i].trim());
+    } else {
+      break; // a line back at column 0 ends the description field
+    }
+  }
+  return parts.join(' ').trim();
 }
 
-const BOUNDARY_LANGUAGE = /\bdoes\s+not\b|\bnot\s+for\b|\bnot\s+the\b|\bnever\b/i;
+// A negation word ("do not"/"don't"/"never"/"does not"/"doesn't")
+// IMMEDIATELY before "use" means this is an instruction about when NOT to
+// delegate, not a real trigger declaration — e.g. "Do not use this when
+// the input is malformed" is not itself a trigger condition. Same
+// negation-lookback discipline lib/goal-checklist.mjs's boundedConstraints
+// and lib/loop-checklist.mjs's explicitStopCondition already apply to
+// their own mention-presence checks.
+const NEGATED_USE = /\b(?:do\s+not|don'?t|never|does\s+not|doesn'?t)\s*$/i;
 const TRIGGER_LANGUAGE = /\buse\b[\s\S]{0,20}?\b(proactively|when|after|for)\b/i;
+
+function hasTriggerLanguage(description) {
+  for (const match of description.matchAll(/\buse\b/gi)) {
+    const before = description.slice(Math.max(0, match.index - 15), match.index);
+    if (NEGATED_USE.test(before)) continue;
+    const after = description.slice(match.index, match.index + 30);
+    if (TRIGGER_LANGUAGE.test(after)) return true;
+  }
+  return false;
+}
+
+// Deliberately narrower than a bare "\bnever\b" (which an earlier version
+// included) — "never crashes even on huge files" is a reliability claim,
+// not a stated non-goal/scope boundary, and every real good entry in
+// golden-sets/subagents.json uses "does not"/"not for"/"not the" instead.
+const BOUNDARY_LANGUAGE = /\bdoes\s+not\b|\bnot\s+for\b|\bnot\s+the\b/i;
 
 /**
  * Score the deterministic subset of `SUBAGENT_CHECKLIST` against a drafted
@@ -97,7 +149,7 @@ export function scoreDeterministicChecklist(content) {
   return {
     hasFrontmatterFields: hasFrontmatterFields(text),
     descriptionStatesBoundary: BOUNDARY_LANGUAGE.test(description),
-    descriptionStatesTrigger: TRIGGER_LANGUAGE.test(description),
+    descriptionStatesTrigger: hasTriggerLanguage(description),
   };
 }
 
