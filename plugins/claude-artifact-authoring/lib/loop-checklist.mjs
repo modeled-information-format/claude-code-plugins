@@ -78,16 +78,21 @@ export function extractDeclaredPattern(content) {
   return match ? match[1].toLowerCase() : null;
 }
 
-// Same "header + non-empty, non-newline-crossing content" shape as
-// lib/goal-checklist.mjs's hasBoundedConstraints — a "Stop condition:"
-// header alone (or one immediately followed by an unrelated new sentence
-// on the next line) is not itself a declared condition.
+// Same "header + non-empty, non-newline-crossing content, no unbounded
+// marker" shape as lib/goal-checklist.mjs's hasBoundedConstraints — a
+// "Stop condition:" header alone (or one immediately followed by an
+// unrelated new sentence on the next line, or one explicitly stating there
+// is no real condition, e.g. "Stop condition: none") is not itself a
+// declared condition.
 const STOP_CONDITION_HEADER = /\bstop\s+condition\s*:[ \t]*([^.\n]*)/i;
+const UNBOUNDED_STOP_CONDITION_BODY = /^(?:none|n\/a|no stop condition)$/i;
 
 function hasExplicitStopCondition(text) {
   const match = text.match(STOP_CONDITION_HEADER);
   if (!match) return false;
-  return match[1].trim().length > 0;
+  const body = match[1].trim();
+  if (!body) return false;
+  return !UNBOUNDED_STOP_CONDITION_BODY.test(body);
 }
 
 /**
@@ -107,12 +112,18 @@ export function scoreDeterministicChecklist(content) {
 }
 
 /**
- * Task #82: assert a loop's pattern-selection record is actually grounded —
- * a non-empty rationale, traceable to the Building-Effective-Agents/ReAct
- * evidence the source doc cites. Mirrors the per-artifact citation
- * convention lib/frontmatter-contract.mjs's citations[] already covers at
- * the whole-artifact level (unlike goal's per-CHECK grounding, a loop has
- * exactly one pattern selection to ground, not an array of checks).
+ * Task #82: assert a loop's pattern-selection record carries the shape
+ * grounding requires — a recognized pattern name and a non-empty rationale.
+ * This is a deterministic PRESENCE check only: it cannot verify the
+ * rationale is actually true or genuinely traceable to the
+ * Building-Effective-Agents/ReAct evidence the source doc cites — that
+ * judgment belongs to the generating agent itself
+ * (skills/generate-loop/SKILL.md step 2), the same way
+ * lib/goal-checklist.mjs's assertChecksGrounded only checks a check's
+ * groundedIn is non-empty, not that it's accurate. Mirrors the per-artifact
+ * citation convention lib/frontmatter-contract.mjs's citations[] already
+ * covers at the whole-artifact level (unlike goal's per-CHECK grounding, a
+ * loop has exactly one pattern selection to ground, not an array of checks).
  */
 export function assertPatternSelectionGrounded({ pattern, rationale }) {
   if (!pattern || !SIX_AGENT_PATTERNS.includes(pattern)) {

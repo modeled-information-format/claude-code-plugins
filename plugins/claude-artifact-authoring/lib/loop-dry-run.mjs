@@ -1,12 +1,16 @@
-// A sandboxed dry-run harness for a generated loop (Epic #40 Story S8 Task
-// #85): "executes the generated loop against a scripted mock environment
-// before it runs unattended, checking that the declared stop condition
-// actually fires." A generated loop's own step logic and stop condition
-// are supplied by the caller as plain functions operating purely in-memory
-// against a caller-scripted mock state — no real side effects (no shell
-// exec, no network, no filesystem writes), which is what makes this
-// "sandboxed": the dry run can never do anything except call the two
-// functions it was given and count iterations.
+// A dry-run harness for a generated loop (Epic #40 Story S8 Task #85):
+// "executes the generated loop against a scripted mock environment before
+// it runs unattended, checking that the declared stop condition actually
+// fires." "Sandboxed" describes the CALLING CONVENTION this harness expects
+// (per skills/generate-loop/SKILL.md step 6: the invoking agent translates
+// the loop's step logic and stop condition into plain `step`/`isDone`
+// functions operating purely in-memory against a scripted mock state, with
+// no real side effects) — this module itself performs no isolation, no
+// `vm` sandboxing, no timeout on the caller-supplied functions, and no
+// restriction on what they do; it is only as sandboxed as the functions it
+// is handed. What IS this module's own real guarantee is the hard
+// iteration ceiling below: regardless of what `step`/`isDone` do, the loop
+// never runs unbounded.
 //
 // This is Task #85's mechanism made real, not a shape check: it actually
 // runs the declared stop condition against the declared step function and

@@ -117,6 +117,19 @@ test('explicitStopCondition rejects an empty "Stop condition:" header or one tha
   );
 });
 
+test('explicitStopCondition rejects an unbounded marker, mirroring goal-checklist.mjs\'s boundedConstraints fix', () => {
+  // Same false positive Copilot flagged on lib/goal-checklist.mjs's
+  // "Constraints: none" — a "Stop condition:" header explicitly stating
+  // there IS no real condition must not score as if a real one were
+  // declared.
+  assert.equal(scoreDeterministicChecklist('Stop condition: none.').explicitStopCondition, false);
+  assert.equal(scoreDeterministicChecklist('Stop condition: n/a.').explicitStopCondition, false);
+  assert.equal(
+    scoreDeterministicChecklist('Stop condition: no stop condition.').explicitStopCondition,
+    false,
+  );
+});
+
 // --- Task #82: pattern-selection grounding ---
 
 test('assertPatternSelectionGrounded passes for a valid pattern with a non-empty rationale', () => {
