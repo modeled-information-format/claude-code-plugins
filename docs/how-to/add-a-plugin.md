@@ -12,7 +12,7 @@ provenance:
     '@type': prov:Activity
   trustLevel: user_stated
   agentVersion: 2.1.208
-modified: '2026-07-14T05:17:55.543Z'
+modified: '2026-07-14T10:50:10.014Z'
 ---
 # Add a plugin to the catalog
 
@@ -74,14 +74,15 @@ a human-readable label.
 }
 ```
 
-> The vendored `artifact-authoring` plugin lives **inside** this repo, so
-> its entry uses a local `"source": "./plugins/artifact-authoring"` path
-> (just the path string, no `git-subdir`/`ref`/`sha` — a local source isn't
-> pinned, since there's no separate repo to pin) rather than the `git-subdir`
-> form. External plugins use the `git-subdir` + `sha` form above; a vendored
-> plugin doesn't need a source pin at all since it's version-controlled
-> alongside this file. See [Registered plugins](/claude-code-plugins/reference/registered-plugins/)
-> for its full catalog entry.
+> A plugin **vendored inside this repo** (e.g. at `plugins/<name>/`) uses a
+> local `"source": "./plugins/<name>"` path instead — just the path string,
+> no `git-subdir`/`ref`/`sha` — since a local source isn't pinned (there's
+> no separate repo to pin). External plugins use the `git-subdir` + `sha`
+> form above; a vendored plugin doesn't need a source pin at all since it's
+> already version-controlled alongside this file. There is no vendored
+> plugin currently registered — see
+> [Registered plugins](/claude-code-plugins/reference/registered-plugins/)
+> for the current catalog.
 
 ## 3. Open a PR — catalog admission runs fail-closed
 

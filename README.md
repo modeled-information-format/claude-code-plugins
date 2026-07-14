@@ -50,26 +50,20 @@ layered scanning, and marketplace integrity — described in
 
 ## What this catalog ships
 
-Two externally-sourced plugins (`mif-docs`, pinned `github`; `modeled-information-format`,
-pinned `git-subdir`) plus one plugin vendored **inside** this repo:
+Two externally-sourced plugins, each pinned to an immutable, attestation-verified
+commit:
 
 ```
 .claude-plugin/marketplace.json   # the catalog (name: "modeled-information-format")
-plugins/
-  artifact-authoring/      # vendored plugin: local-path source, no sha pin
-    .claude-plugin/plugin.json
-    commands/
-    skills/                       # one skill per artifact-authoring pipeline stage
-    lib/                          # deterministic checklist/store/provenance modules
 external_plugins/                 # empty placeholder for future git-subdir + sha plugins
 docs/                             # Diátaxis docs (this README links into them)
 ```
 
-`plugins/artifact-authoring/` exercises attest → scan → verify on real
-content so the pipeline is proven on a vendored plugin, not only external ones.
 `external_plugins/` is reserved for future plugins referenced by `git-subdir`
-plus a 40-char `sha` pin. See [Registered plugins](docs/reference/registered-plugins.md)
-for the full current catalog.
+plus a 40-char `sha` pin — or a plugin vendored directly inside this repo, via
+a local-path source with no separate sha to pin. See
+[Registered plugins](docs/reference/registered-plugins.md) for the full
+current catalog.
 
 ## Quick start
 
@@ -78,12 +72,12 @@ Add this marketplace, then install a plugin from it:
 ```bash
 # in Claude Code
 /plugin marketplace add modeled-information-format/claude-code-plugins
-/plugin install artifact-authoring@modeled-information-format
+/plugin install mif-docs@modeled-information-format
 ```
 
-`artifact-authoring@modeled-information-format` reads as *plugin
-`artifact-authoring` from the `modeled-information-format` marketplace* —
-the marketplace name, not the repo name.
+`mif-docs@modeled-information-format` reads as *plugin `mif-docs` from
+the `modeled-information-format` marketplace* — the marketplace name, not
+the repo name.
 
 Before trusting a release, verify it yourself: see
 [SECURITY.md](SECURITY.md) and [docs/security/verify.md](docs/security/verify.md).
