@@ -7,9 +7,12 @@
 
 An **attested Claude Code plugin marketplace**. Every plugin in this catalog —
 and every constituent it ships (commands, agents, skills, hooks, bundled MCP
-servers) — is SHA-pinned, scanned across the org's quality gates, signed, and
-attested. A plugin's SHA enters the catalog only when its attestations verify
-fail-closed in CI.
+servers) — is scanned across the org's quality gates, signed, and attested.
+Every **external** plugin (sourced via `github` or `git-subdir`) is additionally
+SHA-pinned, and its SHA enters the catalog only when its attestations verify
+fail-closed in CI. A **vendored, local-path** plugin (one that lives inside
+this repo) has no separate source to pin, since it's already version-controlled
+alongside the catalog itself — it still passes the same scanning/signing gates.
 
 > The repository is named `claude-code-plugins`, but the marketplace `name` field
 > in `.claude-plugin/marketplace.json` is **`modeled-information-format`**.
@@ -45,40 +48,36 @@ layered scanning, and marketplace integrity — described in
 > safety. Attestation narrows the trust surface — it does not vouch that a plugin
 > is benign.
 
-## What v1 ships
+## What this catalog ships
 
-A working scaffold plus **one** vendored reference plugin that drives the
-pipeline end to end. The catalog otherwise starts empty.
+Two externally-sourced plugins, each pinned to an immutable, attestation-verified
+commit:
 
 ```
 .claude-plugin/marketplace.json   # the catalog (name: "modeled-information-format")
-plugins/
-  attested-reference/             # vendored reference plugin (a command + a no-op hook)
-    .claude-plugin/plugin.json
-    commands/hello.md
-    hooks/hooks.json
-    hooks/check.sh
 external_plugins/                 # empty placeholder for future git-subdir + sha plugins
 docs/                             # Diátaxis docs (this README links into them)
 ```
 
-`plugins/attested-reference/` exercises attest → scan → verify on real content so
-the pipeline is proven before any external plugin is cataloged.
 `external_plugins/` is reserved for future plugins referenced by `git-subdir`
-plus a 40-char `sha` pin.
+plus a 40-char `sha` pin — or a plugin vendored directly inside this repo, via
+a local-path source with no separate sha to pin. See
+[Registered plugins](docs/reference/registered-plugins.md) for the full
+current catalog.
 
 ## Quick start
 
-Add this marketplace, then install the reference plugin:
+Add this marketplace, then install a plugin from it:
 
 ```bash
 # in Claude Code
 /plugin marketplace add modeled-information-format/claude-code-plugins
-/plugin install attested-reference@modeled-information-format
+/plugin install mif-docs@modeled-information-format
 ```
 
-`attested-reference@modeled-information-format` reads as *plugin `attested-reference` from
-the `modeled-information-format` marketplace* — the marketplace name, not the repo name.
+`mif-docs@modeled-information-format` reads as *plugin `mif-docs` from
+the `modeled-information-format` marketplace* — the marketplace name, not
+the repo name.
 
 Before trusting a release, verify it yourself: see
 [SECURITY.md](SECURITY.md) and [docs/security/verify.md](docs/security/verify.md).
