@@ -1,10 +1,22 @@
 ---
+id: reference-registered-plugins
+type: semantic
+created: '2026-07-14T00:00:00Z'
 title: Registered plugins
 diataxis_type: reference
+provenance:
+  '@type': Provenance
+  agent: claude-code/claude-sonnet-5
+  wasGeneratedBy:
+    '@id': urn:mif:activity:claude-code-session:3921fa8c-0b9e-410e-b53c-6cf81b074757
+    '@type': prov:Activity
+  trustLevel: user_stated
+  agentVersion: 2.1.208
+modified: '2026-07-14T10:49:51.525Z'
 ---
 # Registered plugins
 
-Every plugin listed here is SHA-pinned in [`marketplace.json`](https://github.com/modeled-information-format/claude-code-plugins/blob/main/.claude-plugin/marketplace.json) and passed the [attested admission gates](/claude-code-plugins/explanation/attested-marketplace/) before being added to the catalog.
+Every plugin listed here is registered in [`marketplace.json`](https://github.com/modeled-information-format/claude-code-plugins/blob/main/.claude-plugin/marketplace.json) and passed the [attested admission gates](/claude-code-plugins/explanation/attested-marketplace/) before being added to the catalog. **External** plugins (sourced via `github` or `git-subdir`) are additionally SHA-pinned to an immutable, attestation-verified commit; a **vendored, local-path** plugin — one that lives inside this repo — would have no separate source to pin, since it's already version-controlled alongside this catalog.
 
 ## mif-docs
 
@@ -13,7 +25,7 @@ MIF-first documentation skill suite: one skill per document genre (Diataxis, ADR
 | Field | Value |
 | --- | --- |
 | Source | [modeled-information-format/mif-docs-plugin](https://github.com/modeled-information-format/mif-docs-plugin) |
-| Ref | `v0.3.1` |
+| Ref | `v0.4.3` |
 | Category | documentation |
 | License | MIT |
 | Keywords | documentation, mif, adr, diataxis, rfc, runbook, prd, spec |

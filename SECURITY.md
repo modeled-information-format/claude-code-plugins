@@ -54,7 +54,7 @@ there are no long-lived signing keys.
 Set the variables once. **Substitute the real tarball filename.**
 
 ```bash
-TARBALL="attested-reference-0.1.0.tar.gz"   # the downloaded plugin tarball
+TARBALL="claude-code-plugins-0.3.1.tar.gz"   # the downloaded release tarball
 REPO="modeled-information-format/claude-code-plugins"
 SEAM="modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml"
 ```
@@ -113,7 +113,7 @@ signature that verifies under any other identity or issuer is not this catalog.
 ## What a passing verification looks like
 
 ```
-Loaded digest sha256:abc123... for file://attested-reference-0.1.0.tar.gz
+Loaded digest sha256:abc123... for file://claude-code-plugins-0.3.1.tar.gz
 Loaded 1 attestation from GitHub API
 ✓ Verification succeeded!
 ```

@@ -1,4 +1,7 @@
 ---
+id: home-mif-plugin-marketplace
+type: semantic
+created: '2026-06-30T03:28:29-04:00'
 title: MIF Plugin Marketplace
 description: The modeled-information-format Claude Code plugin marketplace — every plugin SHA-pinned, attested, and admitted only when its attestation verifies fail-closed.
 template: splash
@@ -77,6 +80,15 @@ hero:
       link: https://modeled-information-format.github.io/
       icon: external
       variant: minimal
+provenance:
+  '@type': Provenance
+  agent: claude-code/claude-sonnet-5
+  wasGeneratedBy:
+    '@id': urn:mif:activity:claude-code-session:0cbc1511-6559-422f-9909-b895e058b431
+    '@type': prov:Activity
+  trustLevel: user_stated
+  agentVersion: 2.1.209
+modified: '2026-07-14T12:39:18.424Z'
 ---
 
 ## How admission works
