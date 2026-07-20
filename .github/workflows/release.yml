@@ -165,7 +165,7 @@ jobs:
     needs: [meta]
     permissions: { contents: read, security-events: write, actions: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-secrets.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
+      modeled-information-format/.github/.github/workflows/reusable-secrets.yml@667ee7b3bc93a8789c65cb9b4fedc6d827fcd36a
   gate-manifest:
     needs: [meta]
     permissions: { contents: read, security-events: write, actions: read }
