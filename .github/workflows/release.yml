@@ -143,7 +143,7 @@ jobs:
     needs: [meta]
     permissions: { actions: read, contents: read, security-events: write, pull-requests: write }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-sca-osv.yml@05b13774259a17140419556a45a48ba6a3e36e0c
+      modeled-information-format/.github/.github/workflows/reusable-sca-osv.yml@667ee7b3bc93a8789c65cb9b4fedc6d827fcd36a
     with: { fail-on-severity: high }
   gate-trivy:
     needs: [meta]
