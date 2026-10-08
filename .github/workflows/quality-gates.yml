@@ -13,7 +13,8 @@ name: quality-gates
 # job runs the canonical `claude plugin validate`.
 #
 # The five plugin-gate reusables are merged into modeled-information-format/.github
-# (#12, cosign-signer fix #13) and pinned to that merged main SHA.
+# (#12, cosign-signer fix #13) and pinned by full main SHA per gate — not one
+# shared SHA: semgrep is on a later main SHA carrying Semgrep 1.180.0 (#90).
 
 "on":
   push:
