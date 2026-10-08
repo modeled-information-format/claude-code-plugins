@@ -9,8 +9,8 @@
     "preview": "astro preview"
   },
   "dependencies": {
-    "astro": "7.1.6",
-    "@astrojs/starlight": "0.41.5",
+    "astro": "7.3.5",
+    "@astrojs/starlight": "0.42.5",
     "astro-mermaid": "2.1.0"
   },
   "overrides": {
@@ -21,6 +21,6 @@
     "sharp@0.35.3": true
   },
   "devDependencies": {
-    "starlight-llms-txt": "0.11.0"
+    "starlight-llms-txt": "0.12.0"
   }
 }
