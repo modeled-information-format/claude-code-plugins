@@ -17,8 +17,7 @@
     "esbuild": "0.28.1"
   },
   "allowScripts": {
-    "esbuild@0.28.1": true,
-    "sharp@0.35.3": true
+    "esbuild@0.28.1": true
   },
   "devDependencies": {
     "starlight-llms-txt": "0.12.0"
