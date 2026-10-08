@@ -6,6 +6,9 @@
 # the upstream dependency ranges, and no untrusted input reaching the affected
 # code. Revisit on each release and on every dependency bump; remove an entry
 # as soon as the fix becomes resolvable.
+#
+# Advisories with a fixed release outside an upstream range (katex,
+# postcss-selector-parser) are fixed via package.json `overrides`, not waived.
 
 [[IgnoredVulns]]
 id = "GHSA-vfj7-8cjw-p6xm"
@@ -15,25 +18,3 @@ id = "GHSA-vfj7-8cjw-p6xm"
 # from this repo's own build config, never from user input; not part of the
 # deployed static site. Remove this entry once a fixed braces release ships.
 reason = "No fixed braces release exists; build-time-only transitive (starlight-llms-txt -> micromatch) matching repo-authored patterns, never untrusted input; no production exposure. Revisit when braces ships a fix."
-
-[[IgnoredVulns]]
-id = "GHSA-238p-pmpm-9mq7"
-# katex 0.16.47, CVSS 2.1 (low). Pulled in only by mermaid 11 (via
-# astro-mermaid), which pins katex ^0.16; the fix is 0.18.2, outside that
-# range. KaTeX is only a read-side gadget: exploiting it requires prototype
-# pollution that already exists in the page. Mermaid only invokes KaTeX for
-# math in diagram labels; this site's diagrams are repo-authored (one diagram,
-# in docs/index.md) and contain no math, and no untrusted input reaches them.
-# Remove this entry once mermaid accepts katex >= 0.18.2.
-reason = "Low-severity katex advisory requiring pre-existing prototype pollution; only reachable through mermaid, which pins katex ^0.16 (fix is 0.18.2). Diagrams are repo-authored with no math; no untrusted input reaches KaTeX. Revisit when mermaid bumps katex."
-
-[[IgnoredVulns]]
-id = "GHSA-rj75-hqrm-r3gf"
-# postcss-selector-parser 6.1.4: quadratic-time parsing of very long flat
-# selectors (CPU exhaustion). Fixed only in 7.1.6, but the sole consumer is
-# postcss-nested 6.2.0 (requires ^6.1.1), pinned via @astrojs/starlight ->
-# expressive-code -> @expressive-code/core (postcss-nested ^6.0.1). Build-time
-# only: it parses the repo's own code-block theme CSS while `astro build`
-# runs, never untrusted input, and is not shipped in the deployed static site.
-# Remove this entry once expressive-code moves to postcss-nested >= 7.
-reason = "Fix (7.1.6) is outside postcss-nested 6.x's ^6.1.1 range, pinned by Starlight's expressive-code; build-time-only parsing of repo-authored CSS, never untrusted input; no production exposure. Revisit when expressive-code bumps postcss-nested."
