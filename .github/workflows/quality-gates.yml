@@ -96,7 +96,7 @@ jobs:
       security-events: write
       actions: read
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-semgrep.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
+      modeled-information-format/.github/.github/workflows/reusable-semgrep.yml@63155e10b6f837069f71442f2e49186dd91d6509
     with:
       directory: .
 
