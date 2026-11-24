@@ -21,16 +21,16 @@ permissions:
 jobs:
   # Every `uses:` MUST be a full 40-char commit SHA; thin caller of the central
   # pin-check reusable (never reinvented).
-  # modeled-information-format/.github main @ aba1860 (resolved 2026-06-16)
+  # modeled-information-format/.github main @ c72b3fae (resolved 2026-11-24)
   pin-check:
     permissions:
       contents: read
     uses: >-
-      modeled-information-format/.github/.github/workflows/pin-check.yml@05b13774259a17140419556a45a48ba6a3e36e0c
+      modeled-information-format/.github/.github/workflows/pin-check.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
   # Centralized, verified actionlint fetch.
-  # modeled-information-format/.github @ b314c29 (#6 — in-step PATH fix)
+  # modeled-information-format/.github main @ c72b3fae (resolved 2026-11-24; carries the #6 in-step PATH fix)
   validate-workflows:
     permissions:
       contents: read
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-actionlint.yml@05b13774259a17140419556a45a48ba6a3e36e0c
+      modeled-information-format/.github/.github/workflows/reusable-actionlint.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
