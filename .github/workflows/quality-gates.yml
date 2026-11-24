@@ -41,7 +41,7 @@ jobs:
       actions: read
       packages: read
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-sast-codeql.yml@1b416b97ff3ded8a49ae6873cc350eb1efb389bf
+      modeled-information-format/.github/.github/workflows/reusable-sast-codeql.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
     with:
       languages: actions
       build-mode: none
@@ -53,7 +53,7 @@ jobs:
       security-events: write
       pull-requests: write
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-sca-osv.yml@667ee7b3bc93a8789c65cb9b4fedc6d827fcd36a
+      modeled-information-format/.github/.github/workflows/reusable-sca-osv.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
     with:
       fail-on-severity: high
 
@@ -64,7 +64,7 @@ jobs:
       actions: read
       packages: read
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-trivy.yml@bf1c8e219de5b134c82d51c1b66507cd86e2d711
+      modeled-information-format/.github/.github/workflows/reusable-trivy.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
     with:
       scan-iac: true
 
@@ -76,7 +76,7 @@ jobs:
       contents: read
       actions: read
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-scorecard.yml@1b416b97ff3ded8a49ae6873cc350eb1efb389bf
+      modeled-information-format/.github/.github/workflows/reusable-scorecard.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
     with:
       publish-results: false
     secrets:
@@ -90,14 +90,14 @@ jobs:
       contents: read
       security-events: write
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-shellcheck.yml@667ee7b3bc93a8789c65cb9b4fedc6d827fcd36a
+      modeled-information-format/.github/.github/workflows/reusable-shellcheck.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
   semgrep:
     permissions:
       contents: read
       security-events: write
       actions: read
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-semgrep.yml@63155e10b6f837069f71442f2e49186dd91d6509
+      modeled-information-format/.github/.github/workflows/reusable-semgrep.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
     with:
       directory: .
 
@@ -107,7 +107,7 @@ jobs:
       security-events: write
       actions: read
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-secrets.yml@667ee7b3bc93a8789c65cb9b4fedc6d827fcd36a
+      modeled-information-format/.github/.github/workflows/reusable-secrets.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
     with:
       directory: .
 
@@ -117,7 +117,7 @@ jobs:
       security-events: write
       actions: read
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-manifest-review.yml@667ee7b3bc93a8789c65cb9b4fedc6d827fcd36a
+      modeled-information-format/.github/.github/workflows/reusable-manifest-review.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
     with:
       directory: .
 
@@ -129,7 +129,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install Claude Code CLI (pinned)
         env:

@@ -34,7 +34,7 @@ jobs:
       version: ${{ steps.meta.outputs.version }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Resolve artifact name and version
         id: meta
         run: |
@@ -62,7 +62,7 @@ jobs:
       subject-digest: ${{ steps.subject.outputs.digest }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build marketplace tarball
         env:
           NAME: ${{ needs.meta.outputs.name }}
@@ -86,11 +86,11 @@ jobs:
           echo "name=${FILE}" >> "$GITHUB_OUTPUT"
           echo "digest=sha256:${DIGEST}" >> "$GITHUB_OUTPUT"
       - name: Attest build provenance
-        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: dist/*
       - name: Upload build artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ needs.meta.outputs.name }}-${{ needs.meta.outputs.version }}-dist
           path: dist/*
@@ -106,14 +106,14 @@ jobs:
       attestations: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Download build artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: ${{ needs.meta.outputs.name }}-${{ needs.meta.outputs.version }}-dist
           path: dist
       - name: Generate CycloneDX SBOM
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
         with:
           path: .
           format: cyclonedx-json
@@ -126,7 +126,7 @@ jobs:
           subject-path: dist/*
           sbom-path: ${{ needs.meta.outputs.name }}-${{ needs.meta.outputs.version }}-sbom.cdx.json
       - name: Upload SBOM artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ needs.meta.outputs.name }}-${{ needs.meta.outputs.version }}-sbom
           path: ${{ needs.meta.outputs.name }}-${{ needs.meta.outputs.version }}-sbom.cdx.json
@@ -137,46 +137,46 @@ jobs:
     needs: [meta]
     permissions: { security-events: write, contents: read, actions: read, packages: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-sast-codeql.yml@1b416b97ff3ded8a49ae6873cc350eb1efb389bf
+      modeled-information-format/.github/.github/workflows/reusable-sast-codeql.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
     with: { languages: actions, build-mode: none }
   gate-sca:
     needs: [meta]
     permissions: { actions: read, contents: read, security-events: write, pull-requests: write }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-sca-osv.yml@667ee7b3bc93a8789c65cb9b4fedc6d827fcd36a
+      modeled-information-format/.github/.github/workflows/reusable-sca-osv.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
     with: { fail-on-severity: high }
   gate-trivy:
     needs: [meta]
     permissions: { contents: read, security-events: write, actions: read, packages: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-trivy.yml@bf1c8e219de5b134c82d51c1b66507cd86e2d711
+      modeled-information-format/.github/.github/workflows/reusable-trivy.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
     with: { scan-iac: true }
   gate-shellcheck:
     needs: [meta]
     permissions: { contents: read, security-events: write }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-shellcheck.yml@667ee7b3bc93a8789c65cb9b4fedc6d827fcd36a
+      modeled-information-format/.github/.github/workflows/reusable-shellcheck.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
   gate-semgrep:
     needs: [meta]
     permissions: { contents: read, security-events: write, actions: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-semgrep.yml@63155e10b6f837069f71442f2e49186dd91d6509
+      modeled-information-format/.github/.github/workflows/reusable-semgrep.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
   gate-secrets:
     needs: [meta]
     permissions: { contents: read, security-events: write, actions: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-secrets.yml@667ee7b3bc93a8789c65cb9b4fedc6d827fcd36a
+      modeled-information-format/.github/.github/workflows/reusable-secrets.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
   gate-manifest:
     needs: [meta]
     permissions: { contents: read, security-events: write, actions: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-manifest-review.yml@667ee7b3bc93a8789c65cb9b4fedc6d827fcd36a
+      modeled-information-format/.github/.github/workflows/reusable-manifest-review.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
   # --- seam attestations: bind each verdict to the tarball digest -------------
   attest-sast:
     needs: [meta, build, gate-sast]
     permissions: { id-token: write, attestations: write, contents: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
+      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
     with:
       subject-name: ${{ needs.build.outputs.subject-name }}
       subject-digest: ${{ needs.build.outputs.subject-digest }}
@@ -187,7 +187,7 @@ jobs:
     needs: [meta, build, gate-sca]
     permissions: { id-token: write, attestations: write, contents: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
+      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
     with:
       subject-name: ${{ needs.build.outputs.subject-name }}
       subject-digest: ${{ needs.build.outputs.subject-digest }}
@@ -198,7 +198,7 @@ jobs:
     needs: [meta, build, gate-trivy]
     permissions: { id-token: write, attestations: write, contents: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
+      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
     with:
       subject-name: ${{ needs.build.outputs.subject-name }}
       subject-digest: ${{ needs.build.outputs.subject-digest }}
@@ -209,7 +209,7 @@ jobs:
     needs: [meta, build, gate-shellcheck]
     permissions: { id-token: write, attestations: write, contents: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
+      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
     with:
       subject-name: ${{ needs.build.outputs.subject-name }}
       subject-digest: ${{ needs.build.outputs.subject-digest }}
@@ -220,7 +220,7 @@ jobs:
     needs: [meta, build, gate-semgrep]
     permissions: { id-token: write, attestations: write, contents: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
+      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
     with:
       subject-name: ${{ needs.build.outputs.subject-name }}
       subject-digest: ${{ needs.build.outputs.subject-digest }}
@@ -231,7 +231,7 @@ jobs:
     needs: [meta, build, gate-secrets]
     permissions: { id-token: write, attestations: write, contents: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
+      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
     with:
       subject-name: ${{ needs.build.outputs.subject-name }}
       subject-digest: ${{ needs.build.outputs.subject-digest }}
@@ -242,7 +242,7 @@ jobs:
     needs: [meta, build, gate-manifest]
     permissions: { id-token: write, attestations: write, contents: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
+      modeled-information-format/.github/.github/workflows/reusable-attest-scan.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
     with:
       subject-name: ${{ needs.build.outputs.subject-name }}
       subject-digest: ${{ needs.build.outputs.subject-digest }}
@@ -255,7 +255,7 @@ jobs:
     needs: [meta]
     permissions: { id-token: write, contents: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-cosign-sign.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
+      modeled-information-format/.github/.github/workflows/reusable-cosign-sign.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
     with:
       blob-path: .claude-plugin/marketplace.json
 
@@ -264,7 +264,7 @@ jobs:
     needs: [meta, build]
     permissions: { id-token: write, attestations: write, contents: read }
     uses: >-
-      modeled-information-format/.github/.github/workflows/reusable-vex.yml@5c856f8118976bfd3bb64a8911f69dc9b00b4cad
+      modeled-information-format/.github/.github/workflows/reusable-vex.yml@c72b3fae829318990ba3da9b9d5ea0671ac5151f
     with:
       subject-name: ${{ needs.build.outputs.subject-name }}
       subject-digest: ${{ needs.build.outputs.subject-digest }}
@@ -282,17 +282,17 @@ jobs:
       attestations: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install cosign
-        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
       - name: Download all artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: ${{ needs.meta.outputs.name }}-${{ needs.meta.outputs.version }}-*
           path: all-artifacts
           merge-multiple: true
       - name: Download cosign bundle
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: cosign-bundle
           path: catalog-sig
@@ -346,13 +346,13 @@ jobs:
       contents: read  # release creation now uses the release App token
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: ${{ needs.meta.outputs.name }}-${{ needs.meta.outputs.version }}-*
           path: dist
           merge-multiple: true
       - name: Download cosign bundle
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: cosign-bundle
           path: dist
@@ -366,7 +366,7 @@ jobs:
           cat "${NAME}-${VERSION}-checksums.txt"
       - name: Mint release app token (publish identity)
         id: release_token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           client-id: ${{ vars.RELEASE_CLIENT_APP_ID }}
           private-key: ${{ secrets.RELEASE_CLIENT_APP_PRIVATE_KEY }}
