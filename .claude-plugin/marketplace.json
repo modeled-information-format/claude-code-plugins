@@ -13,8 +13,8 @@
       "source": {
         "source": "github",
         "repo": "modeled-information-format/mif-docs-plugin",
-        "ref": "v0.10.1",
-        "sha": "041d86e4b0acedb9d9aa9a42602239dd1845d459"
+        "ref": "v0.10.2",
+        "sha": "1adfdd22dbcb38a9b08f92ba506cfceebebaea28"
       },
       "description": "MIF-first documentation skill suite: one skill per document genre (Diataxis, ADR, RFC/PEP, runbook, PRD, Kiro, arc42/C4, changelog) over a MIF L1->L3 floor.",
       "author": {
